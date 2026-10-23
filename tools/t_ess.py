@@ -1,0 +1,43 @@
+import asyncio,sys,json
+from playwright.async_api import async_playwright
+S='/home/claude/shots3'
+EX=json.load(open('/home/claude/pietra/pietra-exame-2026-09-17.json'))
+async def main():
+  async with async_playwright() as p:
+    b=await p.chromium.launch()
+    ctx=await b.new_context(viewport={'width':390,'height':844},device_scale_factor=2)
+    pg=await ctx.new_page()
+    errs=[]; pg.on('pageerror',lambda e:errs.append(str(e)[:300]))
+    pg.on('console',lambda m:errs.append('console:'+m.text[:300]) if m.type in('error','warning') and 'Failed to load' not in m.text else None)
+    await pg.route('**/*',lambda r:r.abort() if any(k in r.request.url for k in ['googleapis','gstatic','accounts.google','wger.de','githubusercontent']) else r.continue_())
+    await pg.goto('http://localhost:8766/index-ess.html'); await pg.wait_for_timeout(3000)
+    await pg.screenshot(path=f'{S}/p0-inicio-vazio.png')
+    await pg.evaluate("switchTab('dados')"); await pg.wait_for_timeout(600)
+    await pg.set_input_files('#d3-file',files=[{'name':'exame.json','mimeType':'application/json','buffer':json.dumps(EX).encode()}]); await pg.wait_for_timeout(1500)
+    await pg.screenshot(path=f'{S}/p1-dados.png',full_page=True)
+    await pg.evaluate("switchTab('atividade')"); await pg.wait_for_timeout(500)
+    await pg.click('.chips-tipo button:has-text("Spinning")'); await pg.wait_for_timeout(300)
+    await pg.click('#tab-atividade .f3-cta'); await pg.wait_for_timeout(800)
+    await pg.evaluate("switchTab('inicio')"); await pg.wait_for_timeout(600)
+    await pg.click('.bento4 .az'); await pg.wait_for_timeout(800)
+    await pg.screenshot(path=f'{S}/p2-inicio.png',full_page=True)
+    await pg.evaluate("switchTab('dieta')"); await pg.wait_for_timeout(600)
+    await pg.click('.ref3:has-text("Almoço") .add3'); await pg.wait_for_timeout(500)
+    await pg.screenshot(path=f'{S}/p3-add.png')
+    await pg.click('.metodos3 button:has-text("Colar")'); await pg.wait_for_timeout(600)
+    await pg.screenshot(path=f'{S}/p4-metodo.png')
+    # lança uma refeição pelo bridge
+    await pg.evaluate("Forja3.fecharFolha();ForjaDietBridge.saveQuick({description:'Arroz, feijão e frango',kcal:520,protein_g:38,carbs_g:60,fat_g:12,mealType:'almoco',mealNumber:1})"); await pg.wait_for_timeout(800)
+    await pg.evaluate("document.body.classList.remove('diet-mais');window.scrollTo(0,0)"); await pg.wait_for_timeout(300)
+    await pg.screenshot(path=f'{S}/p5-dieta.png',full_page=True)
+    await pg.evaluate("switchTab('corpo')"); await pg.wait_for_timeout(700)
+    await pg.screenshot(path=f'{S}/p6-peso.png')
+    # recarrega e confere persistência
+    await pg.reload(); await pg.wait_for_timeout(3000)
+    k=await pg.evaluate("(async()=>{const s=await Forja3.goalParts(todayKey());return s})()")
+    print('META',k)
+    vis=await pg.evaluate("[...document.querySelectorAll('.tabs .tab')].filter(b=>getComputedStyle(b).display!=='none').map(b=>b.dataset.tab)")
+    print('ABAS',vis)
+    print('ERROS',json.dumps(errs,ensure_ascii=False,indent=1))
+    await b.close()
+asyncio.run(main())
