@@ -123,7 +123,7 @@
     await loadShortcuts();
     const list=[...shortcuts].sort((a,b)=>((b.uses||0)-(a.uses||0))||((b.last||b.created||0)-(a.last||a.created||0)));
     if(!list.length){
-      wrap.innerHTML='<p class="calc-formula-note">⚡ <b>Atalhos:</b> cada alimento que você lançar (colando o texto do Gemini ou por foto) vira um botão aqui — da próxima vez é só tocar.</p>';
+      wrap.innerHTML='<p class="calc-formula-note">⚡ <b>Atalhos:</b> cada alimento que você lançar vira um botão aqui. Da próxima vez, é só tocar.</p>';
       return;
     }
     wrap.innerHTML=`<div class="shortcut-head"><span>⚡ Atalhos — toque pra lançar</span><button type="button" class="shortcut-edit" onclick="ForjaQuickDiet.toggleEdit()">${editMode?'Pronto':'Editar'}</button></div>

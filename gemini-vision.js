@@ -1,7 +1,41 @@
 (function(root){
   'use strict';
   const K_GEMINI_KEY = 'gemini-api-key';
-  const MODEL = 'gemini-2.0-flash';
+  // Modelos testados em ordem. O gemini-2.0-flash foi desligado em 01/06/2026; o app guarda
+  // o primeiro que responder e só volta a procurar se ele sair do ar (404).
+  const MODELS = ['gemini-flash-latest','gemini-3.8-flash','gemini-3.6-flash','gemini-3.5-flash-lite','gemini-2.5-flash'];
+  const K_MODEL = 'gemini-model-ok';
+  function friendlyError(status, errText){
+    let friendly = `Gemini retornou erro ${status}.`;
+    if(status === 400) friendly = /API key|API_KEY/i.test(errText||'') ? 'Chave do Gemini inválida. Confira a chave.' : 'O Gemini não entendeu o pedido. Tente de novo.';
+    if(status === 403) friendly = 'Chave sem permissão, ou cota gratuita esgotada.';
+    if(status === 429) friendly = 'Limite de uso do Gemini atingido por agora. Tente de novo em alguns minutos.';
+    if(status >= 500) friendly = 'O Gemini está instável agora. Tente de novo em instantes.';
+    return friendly;
+  }
+  async function generate(parts, {json=true}={}){
+    const key = await getApiKey();
+    if(!key) throw new Error('Configure sua chave do Gemini primeiro.');
+    let saved=null;try{const r=await root.ForjaStorage.get(K_MODEL);saved=r?.value||null;}catch{}
+    const order=[...new Set([saved,...MODELS].filter(Boolean))];
+    let lastErr=null;
+    for(const model of order){
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`;
+      const body = { contents:[{parts}], generationConfig: json?{responseMimeType:'application/json'}:{} };
+      let response;
+      try{ response = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); }
+      catch(e){ throw new Error('Sem internet ou o Gemini não respondeu. Tente de novo.'); }
+      if(response.status===404){ lastErr=new Error('Modelo indisponível: '+model); continue; }
+      if(!response.ok){ const t=await response.text().catch(()=>''); throw new Error(friendlyError(response.status,t)); }
+      if(model!==saved){try{await root.ForjaStorage.set(K_MODEL,model);}catch{}}
+      const data = await response.json();
+      const text = (data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('');
+      if(!text) throw new Error('O Gemini não devolveu resposta. Tente de novo.');
+      if(!json) return text;
+      return JSON.parse(text.replace(/```json|```/g,'').trim());
+    }
+    throw lastErr||new Error('Nenhum modelo do Gemini disponível para esta chave.');
+  }
 
   async function getApiKey(){
     try{ const r = await root.ForjaStorage.get(K_GEMINI_KEY); return r?.value || null; }catch{ return null; }
@@ -41,29 +75,7 @@
       : '';
     const prompt = 'Você é um nutricionista analisando uma foto de comida. Identifique cada item visível e estime a quantidade em gramas e as calorias.'+noteBlock+' Responda ESTRITAMENTE em JSON, sem texto adicional, neste formato exato: {"items":[{"name":"<item>","grams":<número>,"kcal":<número>,"protein_g":<número>,"carbs_g":<número>,"fat_g":<número>}],"kcal":<total inteiro>,"protein_g":<total>,"carbs_g":<total>,"fat_g":<total>,"note":"<observação curta em português sobre a estimativa, ex: aproximado, pode variar conforme preparo>"}';
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(key)}`;
-    const body = {
-      contents: [{ parts: [ {text: prompt}, {inline_data: {mime_type: mimeType, data: base64Image}} ] }],
-      generationConfig: { responseMimeType: 'application/json' }
-    };
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(body)
-    });
-    if(!response.ok){
-      const errText = await response.text().catch(() => '');
-      let friendly = `Gemini retornou erro ${response.status}.`;
-      if(response.status === 400) friendly = 'Chave inválida ou pedido malformado. Confira a chave na aba Mais.';
-      if(response.status === 403) friendly = 'Chave sem permissão, ou cota gratuita esgotada.';
-      if(response.status === 429) friendly = 'Limite de uso atingido por agora. Tenta de novo em alguns minutos.';
-      throw new Error(friendly + (errText ? ' ' + errText.slice(0,150) : ''));
-    }
-    const data = await response.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if(!text) throw new Error('O Gemini não identificou nada legível nessa foto.');
-    const cleaned = text.replace(/```json|```/g,'').trim();
-    return JSON.parse(cleaned);
+    return await generate([{text: prompt},{inline_data:{mime_type: mimeType, data: base64Image}}]);
   }
 
   const MUSCLE_GROUPS = ['Peito','Costas','Ombro','Bíceps','Tríceps','Abdômen','Perna','Glúteo','Panturrilha'];
@@ -71,29 +83,7 @@
     const key = await getApiKey();
     if(!key) throw new Error('Configure sua chave do Gemini na aba Mais primeiro.');
     const prompt = `Você é um personal trainer analisando uma foto de um exercício de academia (pode ser o equipamento, a máquina, ou a pessoa executando o movimento). Identifique o nome do exercício em português e qual o principal grupo muscular trabalhado, escolhendo APENAS um destes valores exatos: ${MUSCLE_GROUPS.join(', ')}. Responda ESTRITAMENTE em JSON, sem texto adicional, neste formato exato: {"name":"<nome do exercício em português>","muscleGroup":"<um dos valores da lista>"}`;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(key)}`;
-    const body = {
-      contents: [{ parts: [ {text: prompt}, {inline_data: {mime_type: mimeType, data: base64Image}} ] }],
-      generationConfig: { responseMimeType: 'application/json' }
-    };
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(body)
-    });
-    if(!response.ok){
-      const errText = await response.text().catch(() => '');
-      let friendly = `Gemini retornou erro ${response.status}.`;
-      if(response.status === 400) friendly = 'Chave inválida ou pedido malformado. Confira a chave na aba Mais.';
-      if(response.status === 403) friendly = 'Chave sem permissão, ou cota gratuita esgotada.';
-      if(response.status === 429) friendly = 'Limite de uso atingido por agora. Tenta de novo em alguns minutos.';
-      throw new Error(friendly + (errText ? ' ' + errText.slice(0,150) : ''));
-    }
-    const data = await response.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if(!text) throw new Error('O Gemini não identificou nada legível nessa foto.');
-    const cleaned = text.replace(/```json|```/g,'').trim();
-    const parsed = JSON.parse(cleaned);
+    const parsed = await generate([{text: prompt},{inline_data:{mime_type: mimeType, data: base64Image}}]);
     if(!MUSCLE_GROUPS.includes(parsed.muscleGroup)) parsed.muscleGroup = null;
     return parsed;
   }
@@ -125,29 +115,7 @@
     const key = await getApiKey();
     if(!key) throw new Error('Configure sua chave do Gemini na aba Mais primeiro.');
     const prompt = 'Você está olhando um print de tela de um app de dieta/nutrição (como o Zepp), mostrando os totais do dia: calorias comidas, calorias restantes ou queimadas, e os macros (carboidrato, proteína, gordura) em gramas. Leia os números exatamente como aparecem na tela. Responda ESTRITAMENTE em JSON, sem texto adicional, neste formato exato: {"kcal":<calorias comidas, número inteiro>,"kcal_queimado":<calorias de exercício/queimadas, número inteiro ou null se não aparecer>,"protein_g":<número ou null>,"carbs_g":<número ou null>,"fat_g":<número ou null>}';
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(key)}`;
-    const body = {
-      contents: [{ parts: [ {text: prompt}, {inline_data: {mime_type: mimeType, data: base64Image}} ] }],
-      generationConfig: { responseMimeType: 'application/json' }
-    };
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(body)
-    });
-    if(!response.ok){
-      const errText = await response.text().catch(() => '');
-      let friendly = `Gemini retornou erro ${response.status}.`;
-      if(response.status === 400) friendly = 'Chave inválida ou pedido malformado. Confira a chave na aba Mais.';
-      if(response.status === 403) friendly = 'Chave sem permissão, ou cota gratuita esgotada.';
-      if(response.status === 429) friendly = 'Limite de uso atingido por agora. Tenta de novo em alguns minutos.';
-      throw new Error(friendly + (errText ? ' ' + errText.slice(0,150) : ''));
-    }
-    const data = await response.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if(!text) throw new Error('O Gemini não conseguiu ler os números dessa tela.');
-    const cleaned = text.replace(/```json|```/g,'').trim();
-    return JSON.parse(cleaned);
+    return await generate([{text: prompt},{inline_data:{mime_type: mimeType, data: base64Image}}]);
   }
 
   let busy = false;
@@ -354,5 +322,5 @@
     }
   }
 
-  root.ForjaGeminiVision = { getApiKey, setApiKey, saveKeyFromUI, renderKeyStatus, handlePhoto, confirmSave, analyzeFoodPhoto, analyzeExercisePhoto, handleExercisePhoto, analyzeDietScreenshot, handleQuickPhotoSelect, analyzeQuickPhoto, confirmQuickPhoto, toggleQuickNoteDictation, quickNoteSpeechSupported };
+  root.ForjaGeminiVision = { generate, getApiKey, setApiKey, saveKeyFromUI, renderKeyStatus, handlePhoto, confirmSave, analyzeFoodPhoto, analyzeExercisePhoto, handleExercisePhoto, analyzeDietScreenshot, handleQuickPhotoSelect, analyzeQuickPhoto, confirmQuickPhoto, toggleQuickNoteDictation, quickNoteSpeechSupported };
 })(globalThis);

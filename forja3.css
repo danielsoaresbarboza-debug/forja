@@ -371,7 +371,7 @@ body.f3.agua-ajustar #agua-old{display:block}
    COMIDA 3.0
    ===================================================================== */
 body.f3 #diet-summary-card,body.f3 #tab-dieta > .import-section-header,body.f3 #diet-today-list,body.f3 #tab-dieta .cc-card:has(#diet-today-list){display:none!important}
-body.f3:not(.diet-mais) #tab-dieta > :not(#diet3):not(.diet-mais-btn):not(#diet-add3-anchor){display:none!important}
+body.f3:not(.diet-mais) #tab-dieta > :not(#diet3):not(#ia3):not(#diet3m):not(.diet-mais-btn):not(#diet-add3-anchor){display:none!important}
 body.f3.diet-mais #tab-dieta > .import-section-header{display:flex!important}
 .diet-mais-btn{display:block;width:100%;margin:4px 0 14px;background:none;border:0;color:var(--f3-tx-3);font-family:var(--f3-ui);font-weight:700;font-size:15px;min-height:44px}
 .kc3{display:flex;gap:14px;align-items:center;padding:14px;border-radius:20px;background:linear-gradient(150deg,rgba(62,224,143,.10),var(--f3-carvao-2));border:1px solid rgba(62,224,143,.24);margin-bottom:12px}
@@ -699,3 +699,38 @@ body.f3[data-theme="light"] main .calorie-result-card .val,body.f3[data-theme="l
 body.f3[data-theme="light"] main .backup-status-warn{color:#8a5a00!important}
 body.f3[data-theme="light"] main .gym-status.pending{color:#7a0014!important}
 body.f3[data-theme="light"] main .angle-btn.active{color:#7a0014!important}
+
+/* ===== 3.4 O que você comeu? (IA) ===== */
+.ia-card textarea{width:100%;min-height:92px;resize:vertical;font-size:17px!important;line-height:1.4}
+.ia-acoes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.ia-acoes button{min-height:56px;border-radius:14px;border:1px solid var(--f3-borda);background:var(--f3-vidro);color:var(--f3-tx);font-family:var(--f3-ui);font-weight:700;font-size:15px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer}
+.ia-acoes button span{font-size:20px;line-height:1}
+.ia-acoes button.on{background:var(--f3-treino);border-color:var(--f3-treino);color:#fff;animation:del-pulse .9s ease-in-out infinite alternate}
+.ia-card #ia-calc:disabled{opacity:.7}
+.ia-foto{position:relative;margin:0 0 8px}
+.ia-foto img{width:100%;max-height:220px;object-fit:cover;border-radius:14px;display:block}
+.ia-foto button{position:absolute;top:8px;right:8px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:16px}
+.ia-liga{padding:12px;border-radius:14px;background:color-mix(in srgb,var(--f3-supl) 12%,transparent);border:1px solid color-mix(in srgb,var(--f3-supl) 40%,transparent);margin-bottom:10px;font-size:15px}
+.ia-liga ol{margin:6px 0 8px;padding-left:20px;color:var(--f3-tx-2)} .ia-liga li{margin:3px 0}
+.ia-liga a{color:var(--f3-supl)} body[data-theme="light"] .ia-liga a{color:#a85f00}
+.ia-liga small{display:block;color:var(--f3-tx-3);margin-top:6px}
+.ia-liga-row{display:grid;grid-template-columns:1fr auto;gap:8px}
+.ia-liga-row button{min-height:48px;padding:0 16px;border-radius:12px;border:0;background:var(--f3-supl);color:#1a1000;font-family:var(--f3-ui);font-weight:800;font-size:16px}
+.ia-itens{display:flex;flex-direction:column;border:1px solid var(--f3-aresta);border-radius:14px;overflow:hidden;margin-top:6px}
+.ia-it{display:grid;grid-template-columns:1fr auto 40px;gap:10px;align-items:center;padding:10px 6px 10px 12px;border-top:1px solid var(--f3-aresta)}
+.ia-it:first-child{border-top:0}
+.ia-it b{display:block;font-size:16px;line-height:1.25} .ia-it small{display:block;color:var(--f3-tx-3);font-size:13px}
+.ia-it>span{text-align:right;font-family:var(--f3-num);font-weight:700;font-size:15px;white-space:nowrap}
+.ia-it button{width:40px;height:40px;border-radius:11px;border:1px solid var(--f3-aresta);background:transparent;color:var(--f3-tx-3)}
+.ia-tot{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:6px;margin:10px 0 2px}
+.ia-tot div{background:var(--f3-chapa);border:1px solid var(--f3-aresta);border-radius:12px;padding:8px;text-align:center}
+.ia-tot div:first-child{border-color:var(--f3-comida);background:color-mix(in srgb,var(--f3-comida) 12%,transparent)}
+.ia-tot small{display:block;font-size:12px;color:var(--f3-tx-3)} .ia-tot b{font-family:var(--f3-num);font-size:15px}
+.ia-tot div:first-child b{color:var(--f3-comida)}
+.ia-refs{flex-wrap:wrap}
+.ia-limpar{display:block;margin:8px auto 0;min-height:44px;background:none;border:0;color:var(--f3-tx-3);font-family:var(--f3-ui);font-weight:700;font-size:15px}
+#ia-atalhos:not(:empty){margin-top:16px;padding-top:12px;border-top:1px solid var(--f3-aresta)}
+.ia-liga-row button{background:var(--f3-supl)!important;color:#1a1000!important;border:0!important}
+.chips-min.ia-refs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.chips-min.ia-refs button{padding:0 2px;min-height:48px;font-family:var(--f3-ui);font-size:14px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;border-radius:14px}
+.metodos3 button.ia{grid-column:1/-1;background:linear-gradient(145deg,#ff2a46,#a5001a);border:0;color:#fff;font-size:16px;min-height:52px}

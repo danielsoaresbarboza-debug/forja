@@ -329,8 +329,9 @@ async function renderDiet(){
   host.innerHTML=`<div class="dia3"><button type="button" aria-label="Dia anterior" onclick="shiftDietDate(-1)">‹</button><b>${diaRel(date)}</b><button type="button" aria-label="Próximo dia" onclick="shiftDietDate(1)" ${date>=tk()?'disabled':''}>›</button></div>
     <div class="kc3"><div class="ar3 big comida" style="--p:${goal?Math.min(100,com/goal*100):0}"><b>${nf(com)}</b><small>${goal?(com>goal?`${nf(com-goal)} acima`:`faltam ${nf(goal-com)}`):'kcal'}</small></div>
       <div class="macs3">${bar('Proteína',P,Math.round(G.protein_g||0),'var(--f3-comida)')}${bar('Carbo',C,Math.round(G.carbs_g||0),'var(--f3-supl)')}${bar('Gordura',F,Math.round(G.fat_g||0),'var(--f3-agua)')}</div></div>
-    ${parts?`<p class="f3-nota c">Meta de hoje ${nf(parts.total)} kcal = basal ${nf(parts.base)} + dia a dia ${nf(parts.dia)} + atividades ${nf(parts.act)} − ${nf(parts.def)}.</p>`:goal?`<p class="f3-nota c">Meta do dia: ${nf(goal)} kcal.</p>`:''}
-    ${meals}`;
+    ${parts?`<p class="f3-nota c">Meta de hoje ${nf(parts.total)} kcal = basal ${nf(parts.base)} + dia a dia ${nf(parts.dia)} + atividades ${nf(parts.act)} − ${nf(parts.def)}.</p>`:goal?`<p class="f3-nota c">Meta do dia: ${nf(goal)} kcal.</p>`:''}`;
+  const mh=$('diet3m');if(mh)mh.innerHTML=meals;else host.insertAdjacentHTML('beforeend',meals);
+  try{root.ForjaIA?.montar?.();}catch{}
 }
 async function recentes(){
   await root.loadDietCache();const all=(typeof dietCache!=='undefined'?dietCache:[]); // eslint-disable-line no-undef
@@ -345,12 +346,13 @@ async function abrirAdicionar(meal){
   tap();addMeal=meal;recCache=await recentes();
   const t=(typeof MEAL_TYPES!=='undefined'?MEAL_TYPES:[]).find(x=>x.key===meal)||{label:'refeição'}; // eslint-disable-line no-undef
   abrirFolha(`<div class="f3-t">Adicionar ao ${esc(t.label)}</div>
-    <div class="metodos3"><button type="button" onclick="Forja3.metodo('food')">⌕ Buscar</button><button type="button" onclick="Forja3.metodo('barcode')">▥ Código</button><button type="button" onclick="Forja3.metodo('photo')">📷 Foto</button><button type="button" onclick="Forja3.metodo('text')">✎ Colar texto</button></div>
+    <div class="metodos3">${isEss()?'':`<button type="button" class="ia" onclick="Forja3.metodo('ia')">✨ Descrever (IA)</button>`}<button type="button" onclick="Forja3.metodo('food')">⌕ Buscar</button><button type="button" onclick="Forja3.metodo('barcode')">▥ Código</button><button type="button" onclick="Forja3.metodo('photo')">📷 Foto</button><button type="button" onclick="Forja3.metodo('text')">✎ Colar texto</button></div>
     <div class="f3-lbl">Recentes · um toque lança</div>
     <div class="rec3">${recCache.length?recCache.map((r,i)=>`<button type="button" onclick="Forja3.lancarRecente(${i})"><b>${esc(r.description)}</b><small>${nf(r.kcal)} kcal${r.protein_g!=null?` · P ${nf(r.protein_g)} g`:''}</small><span>+</span></button>`).join(''):'<p class="f3-vazio">O que você lançar fica aqui para repetir com um toque.</p>'}</div>`);
 }
 async function lancarRecente(i){const r=recCache[i];if(!r)return;fecharFolha();await lancarComida(r,addMeal);}
 function metodo(m){
+  if(m==='ia'){fecharFolha();root.ForjaIA?.focar?.(addMeal);return;}
   fecharFolha();try{root.selectDietMealType?.(addMeal);}catch{}
   doc.body.classList.add('diet-mais');
   try{root.ForjaDietFlow?.showMethod?.(m);}catch{}
@@ -451,8 +453,9 @@ function montar(){
   if(ag&&!$('agua3')){const old=ag.querySelector(':scope > .card');if(old)old.id='agua-old';const d=doc.createElement('div');d.id='agua3';d.className='agua3';ag.prepend(d);}
   const di=$('tab-dieta');
   if(di&&!$('diet3')){const d=doc.createElement('div');d.id='diet3';d.className='diet3';di.prepend(d);
+    if(!isEss()){const ia=doc.createElement('div');ia.id='ia3';ia.className='ia3';d.after(ia);const ml=doc.createElement('div');ml.id='diet3m';ml.className='diet3';ia.after(ml);}
     const addCard=$('diet-meal-type-grid')?.closest('.card');if(addCard){const a=doc.createElement('div');a.id='diet-add3-anchor';addCard.before(a);addCard.classList.add('diet-add-old');}
-    const more=doc.createElement('button');more.type='button';more.className='diet-mais-btn';more.textContent='Mais formas de lançar e histórico ›';more.onclick=()=>{doc.body.classList.toggle('diet-mais');};d.after(more);}
+    const more=doc.createElement('button');more.type='button';more.className='diet-mais-btn';more.textContent='Mais formas de lançar e histórico ›';more.onclick=()=>{doc.body.classList.toggle('diet-mais');};($('diet3m')||d).after(more);}
   const peso=$('weight-pending-display');
   if(peso&&!$('turno3')){const card=peso.closest('.card');card?.classList.add('peso3');const sel=$('body-period');if(sel){const s=doc.createElement('div');s.id='turno3';s.className='turno3';sel.after(s);}
     const t=doc.createElement('p');t.id='peso-tend3';t.className='peso-tend3';card?.querySelector('.card-head')?.after(t);}
@@ -479,7 +482,7 @@ async function init(){
   try{await renderHome();await renderWater();await renderDiet();await renderBody();}catch(e){console.warn('Forja3',e);}
 }
 root.Forja3={onSwitch,toggleTabs,go,NOMES,init,renderHome,renderWater,renderDiet,renderBody,renderDados,renderAtividade,activityKcal,dynamicGoal,goalParts,
-  addWater,undoWater,outroAgua,toggleAjustarAgua,toggleSupl,editSupl,addSupl,removeSupl,abrirFolha,fecharFolha,abrirAdicionar,lancarRecente,metodo,
+  addWater,undoWater,outroAgua,toggleAjustarAgua,toggleSupl,editSupl,addSupl,removeSupl,abrirFolha,fecharFolha,abrirAdicionar,lancarRecente,metodo,lancarComida,mealDaHora,
   actSet,saveAct,saveRelogio,delAct,salvarCampo,metaStep,metaFix,applyMetas,importarExame,aplicarExame,renderMetasCard,isEss};
 // eslint-disable-next-line no-undef
 if(typeof forjaInitialization!=='undefined'&&forjaInitialization.then)forjaInitialization.then(init).catch(e=>console.error('Forja3:',e)); else root.addEventListener('load',init);
