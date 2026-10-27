@@ -5,6 +5,7 @@ async def main():
   async with async_playwright() as p:
     b=await p.chromium.launch()
     ctx=await b.new_context(viewport={'width':390,'height':844},device_scale_factor=2)
+    await ctx.add_init_script("window.__semTour=true;")
     pg=await ctx.new_page()
     errs=[]; pg.on('pageerror',lambda e:errs.append(str(e)[:200])); pg.on('console',lambda m:errs.append('console:'+m.text[:200]) if m.type=='error' else None)
     await pg.route('**/*',lambda r:r.abort() if any(k in r.request.url for k in ['googleapis','gstatic','accounts.google','wger.de','githubusercontent']) else r.continue_())
