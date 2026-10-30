@@ -30,6 +30,12 @@ const hasToken=()=>!!token&&Date.now()<tokenExp-60000;
 // Pede o token. interactive=true só a partir de um toque (senão o navegador bloqueia a janelinha).
 async function getToken(interactive){
   if(hasToken())return token;
+  // App Android do Forja: o Google não deixa logar dentro de app; usa o login do próprio Android.
+  const nat=root.Capacitor&&root.Capacitor.isNativePlatform&&root.Capacitor.isNativePlatform()?root.Capacitor.Plugins?.ForjaSaude:null;
+  if(nat){
+    try{const r=await nat.googleToken({scope:SCOPE,interativo:!!interactive});token=r.token;tokenExp=Date.now()+50*60*1000;return token;}
+    catch(e){const err=new Error(e&&e.code==='android-client'?'Falta liberar o app Android no Google Cloud (Client ID do tipo Android).':(e&&e.message)||'Não consegui entrar no Google.');err.code=e&&e.code==='needs-tap'?'needs-tap':(e&&e.code)||'erro';throw err;}
+  }
   if(!interactive){const e=new Error('Toque em "Sincronizar" para entrar no Google de novo.');e.code='needs-tap';throw e;}
   const cid=await clientId();
   if(!cid){const e=new Error('Falta o Client ID do Google (configuração do Daniel, uma vez só).');e.code='no-client';throw e;}

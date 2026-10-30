@@ -83,6 +83,16 @@ function tirarFoto(){st.foto=null;const b=$('ia-foto');if(b){b.hidden=true;b.inn
 function ditar(){
   tap();const R=root.SpeechRecognition||root.webkitSpeechRecognition;const btn=$('ia-ditar');const ta=$('ia-texto');
   if(st.ouvindo){st.ouvindo.stop();return;}
+  const nat=root.Capacitor&&root.Capacitor.isNativePlatform&&root.Capacitor.isNativePlatform()?root.Capacitor.Plugins?.ForjaSaude:null;
+  if(nat){ // dentro do app Android: o ditado do navegador não existe, usa o do Android
+    const base=ta.value.trim();let h=null;
+    st.ouvindo={stop:()=>nat.parar()};btn.classList.add('on');btn.innerHTML='<span>🔴</span>Parar';status('Ouvindo… fale o que comeu.');
+    nat.addListener('parcial',e=>{ta.value=[base,e.texto].filter(Boolean).join(' ');}).then(x=>h=x);
+    nat.ouvir().then(r=>{if(r&&r.texto)ta.value=[base,r.texto].filter(Boolean).join(' ');})
+      .catch(e=>toast(e.message||'Não consegui ouvir.'))
+      .finally(()=>{try{h&&h.remove();}catch{}btn.classList.remove('on');btn.innerHTML='<span>🎤</span>Ditar';st.ouvindo=null;status(ta.value.trim()?'Confira o texto e toque em Calcular com IA.':'');});
+    return;
+  }
   if(!R){toast('Ditado não disponível neste navegador. Use o 🎤 do teclado ou o botão Áudio.');return;}
   const rec=new R();rec.lang='pt-BR';rec.interimResults=true;rec.continuous=true;
   const base=ta.value.trim();let final='';

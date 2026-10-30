@@ -222,7 +222,8 @@ async function renderHome(){
   const bento=ess
     ?[['🍽','Refeição',"Forja3.go('dieta')",''],['💧','+250 ml','Forja3.addWater(250)','az'],['🔥','Atividade',"Forja3.go('atividade')",'am'],['⚖️','Peso',"Forja3.go('corpo')",'ro']]
     :[['🍽','Refeição',"Forja3.go('dieta')",''],['💧','+250 ml','Forja3.addWater(250)','az'],['🏋️','Treinar',"Forja3.go('academia')",'vm'],['💊','Suplem.',"document.getElementById('supl3')?.scrollIntoView({behavior:'smooth',block:'center'})",'am']];
-  let html=`<div class="hoje3-p"><div class="hd3">${dataLonga(h)}</div><div class="ht3">${saud}${nome?', '+esc(nome):''}</div><div class="aneis3">${rings}</div><div class="frase3">${frase}</div></div>
+  let saudeLinha='';try{saudeLinha=await (root.ForjaSaude?.linhaHome?.()??'');}catch{}
+  let html=`<div class="hoje3-p"><div class="hd3">${dataLonga(h)}</div><div class="ht3">${saud}${nome?', '+esc(nome):''}</div><div class="aneis3">${rings}</div><div class="frase3">${frase}</div>${saudeLinha}</div>
     <div class="bento4">${bento.map(([ic,l,fn,c])=>`<button type="button" class="${c}" onclick="${fn}"><span class="ic">${ic}</span><b>${l}</b></button>`).join('')}</div>`;
   try{html+=await root.ForjaMeta.homeCard();}catch{}
   // calorias do dia (essencial: em destaque)
