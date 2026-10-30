@@ -21,19 +21,19 @@ jobs:
           itens=[]; depois=None
           for i in range(100):
               url='https://oss.exercisedb.dev/api/v1/exercises?limit=25'+('&after='+depois if depois else '')
-              for t in range(4):
+              for t in range(12):
                   try:
                       req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 (forja-app; github actions)','Accept':'application/json'})
                       j=json.load(urllib.request.urlopen(req,timeout=30)); break
                   except Exception as e:
-                      print('erro',i,t,e); time.sleep(3)
+                      print('erro',i,t,e); open('diag.txt','a').write('erro pagina %d tentativa %d: %s\n'%(i,t,e)); time.sleep(15*(t+1))
               else:
                   break
               for e in j.get('data',[]):
                   itens.append([e['exerciseId'],e['name'],(e.get('targetMuscles') or [''])[0],(e.get('bodyParts') or [''])[0],(e.get('equipments') or [''])[0]])
               m=j.get('meta') or {}
               if not m.get('hasNextPage') or not m.get('nextCursor'): break
-              depois=m['nextCursor']; time.sleep(0.3)
+              depois=m['nextCursor']; time.sleep(4)
           print('total',len(itens))
           json.dump({'fonte':'ExerciseDB V1 (oss.exercisedb.dev) — gifs em static.exercisedb.dev','em':int(time.time()*1000),'itens':itens},open('edb-index.json','w'),ensure_ascii=False,separators=(',',':'))
           open('diag.txt','a').write('\n== total %d\n'%len(itens))
