@@ -152,8 +152,14 @@ async function delAct(id,silent){
 }
 
 // ===================== suplementos =====================
-const SUPL_PADRAO=[{id:'creatina',nome:'Creatina',dose:'5 g',tipo:'creatina'},{id:'whey',nome:'Whey',dose:'1 scoop',kcal:120,protein_g:24,carbs_g:3,fat_g:1}];
-async function loadSupl(){return await getJ('f3-supl',SUPL_PADRAO);}
+const SUPL_PADRAO=[{id:'creatina',nome:'Creatina',dose:'5 g',tipo:'creatina'},{id:'whey',nome:'Whey',dose:'30 g + 300 ml leite desnatado',kcal:225,protein_g:34.3,carbs_g:16.4,fat_g:2.5}];
+async function loadSupl(){
+  const l=await getJ('f3-supl',SUPL_PADRAO);
+  // 3.8: o whey antigo (genérico, 120 kcal) vira o shake do Daniel: Whey ISO X 30 g + 300 ml de leite desnatado
+  const w=l.find(x=>x.id==='whey');
+  if(w&&w.kcal===120&&w.dose==='1 scoop'){Object.assign(w,SUPL_PADRAO[1]);await setJ('f3-supl',l);}
+  return l;
+}
 async function suplHoje(){const log=await getJ('f3-supl-log',{});const cre=await getJ('creatine-days-v1',[]);const h=tk();const s=new Set(log[h]||[]);if(cre.includes(h))s.add('creatina');return s;}
 async function toggleSupl(id){
   tap();const h=tk();const list=await loadSupl();const it=list.find(x=>x.id===id);if(!it)return;
@@ -163,15 +169,21 @@ async function toggleSupl(id){
   if(ja){
     if(it.tipo==='creatina')cre=cre.filter(d=>d!==h);else day.delete(id);
     log[h]=[...day];await setJ('f3-supl-log',log);await setJ('creatine-days-v1',cre);
-    if(it.dietId){/* remove o lançamento do whey */try{await root.deleteDietEntry?.(it.dietId);}catch{}}
-    toast(`${it.nome} desmarcado.`);
+    const lig=await getJ('f3-supl-diet',{});const did=lig[h+'|'+id];
+    if(did){try{await root.loadDietCache?.();if(typeof dietCache!=='undefined'){dietCache=dietCache.filter(e=>e.id!==did);await root.persistDietCache?.();}}catch{} // eslint-disable-line no-undef
+      delete lig[h+'|'+id];await setJ('f3-supl-diet',lig);try{await root.renderDietTab?.();}catch{}}
+    toast(did?`${it.nome} desmarcado e tirado das calorias.`:`${it.nome} desmarcado.`);
   }else{
     if(it.tipo==='creatina'){cre.push(h);cre=[...new Set(cre)].sort();}else day.add(id);
     log[h]=[...day];await setJ('f3-supl-log',log);await setJ('creatine-days-v1',cre);
     if(it.kcal){
       const meal=mealDaHora();
-      try{await lancarComida({description:`${it.nome} (${it.dose})`,kcal:it.kcal,protein_g:it.protein_g??null,carbs_g:it.carbs_g??null,fat_g:it.fat_g??null},meal,true);}catch{}
-      toast(`${it.nome} marcado e lançado: ${it.kcal} kcal${it.protein_g?` · P ${it.protein_g} g`:''}`);
+      try{
+        await lancarComida({description:`${it.nome} (${it.dose})`,kcal:it.kcal,protein_g:it.protein_g??null,carbs_g:it.carbs_g??null,fat_g:it.fat_g??null,fonte:'supl-'+id},meal,true);
+        const all=(typeof dietCache!=='undefined'?dietCache:[]);const e=[...all].reverse().find(x=>x.date===h&&x.fonte==='supl-'+id); // eslint-disable-line no-undef
+        if(e){const lig=await getJ('f3-supl-diet',{});lig[h+'|'+id]=e.id;await setJ('f3-supl-diet',lig);}
+      }catch{}
+      toast(`${it.nome} marcado e lançado: ${nf(it.kcal)} kcal${it.protein_g?` · P ${nf(it.protein_g)} g`:''}`);
     }else toast(`${it.nome} de hoje marcado ✓`);
   }
   await renderHome();root.ForjaCreatine?.render?.();
