@@ -20,13 +20,22 @@ function tokens(s){
 }
 function prepara(lista){return lista.map(([id,nome,alvo,parte,equip])=>{const t=new Set(tokens(nome));return {id,nome,alvo,parte,equip,t,eq:[...t].filter(x=>EQUIP.has(x))};});}
 
+let ultimoErro='';
 async function http(url){
-  const C=root.Capacitor;
+  const C=root.Capacitor;const erros=[];
   if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.CapacitorHttp){
-    const r=await C.Plugins.CapacitorHttp.request({url,method:'GET'});
-    return typeof r.data==='string'?JSON.parse(r.data):r.data;
+    try{
+      const r=await C.Plugins.CapacitorHttp.request({url,method:'GET',responseType:'json',
+        headers:{'Accept':'application/json','User-Agent':root.navigator.userAgent||'Mozilla/5.0 (Linux; Android 14) Chrome/130 Mobile Safari/537.36'}});
+      if(r.status&&r.status>=400)throw Error('HTTP '+r.status);
+      const d=typeof r.data==='string'?JSON.parse(r.data):r.data;
+      if(d&&Array.isArray(d.data))return d;
+      throw Error('resposta inesperada');
+    }catch(e){erros.push('nativo: '+(e.message||e));}
   }
-  const r=await root.fetch(url);if(!r.ok)throw Error('HTTP '+r.status);return r.json();
+  try{const r=await root.fetch(url,{headers:{'Accept':'application/json'}});if(!r.ok)throw Error('HTTP '+r.status);return await r.json();}
+  catch(e){erros.push('web: '+(e.message||e));}
+  ultimoErro=erros.join(' · ');throw Error(ultimoErro);
 }
 async function baixar(onProg){
   const itens=[];let depois=null;
@@ -92,12 +101,12 @@ async function render(){
   const host=root.document.getElementById('gifs3');if(!host)return;
   const n=indice?indice.length:0;
   host.innerHTML=`<div class="f3-t">🎞️ GIFs dos exercícios</div>
-    <p class="f3-nota">${n?`${n.toLocaleString('pt-BR')} exercícios de musculação com GIF (ExerciseDB, grátis). Aparecem ao abrir um exercício.`:carregando?`Baixando a lista… ${progresso} de 1.500`:'Baixe a lista uma vez (precisa de internet). Os GIFs aparecem ao abrir um exercício.'}</p>
+    <p class="f3-nota">${n?`${n.toLocaleString('pt-BR')} exercícios de musculação com GIF (ExerciseDB, grátis). Aparecem ao abrir um exercício.`:carregando?`Baixando a lista… ${progresso} de 1.500`:'Baixe a lista uma vez (precisa de internet). Os GIFs aparecem ao abrir um exercício.'}</p>${!n&&ultimoErro?`<p class="f3-nota" style="color:var(--f3-treino)">Não deu certo (${ultimoErro.replace(/[<>]/g,'')}). Me mande um print disto.</p>`:''}
     <button type="button" class="f3-cta sec" onclick="ForjaGifs.atualizar()">${n?'Atualizar lista':'Baixar lista de GIFs'}</button>`;
 }
 async function atualizar(){
   try{root.showToast?.('Baixando a lista de GIFs…');const p=carregar({forcar:!!indice,onProg:()=>render()});render();await p;root.showToast?.(`🎞️ ${indice.length} exercícios com GIF prontos.`);}
-  catch(e){root.showToast?.(root.Capacitor?'Não consegui baixar agora. Tente de novo com internet.':'No navegador o ExerciseDB pode bloquear. No app Android funciona.');}
+  catch(e){ultimoErro=ultimoErro||e.message||'erro';root.showToast?.('Não consegui baixar os GIFs. Detalhe no cartão.');}
   render();
 }
 function montar(){
