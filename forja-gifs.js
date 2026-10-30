@@ -103,7 +103,9 @@ async function atualizar(){
 function montar(){
   const mais=root.document.getElementById('tab-mais');if(!mais||root.document.getElementById('gifs3'))return;
   const d=root.document.createElement('div');d.id='gifs3';d.className='f3-card gifs3';
-  const ref=root.document.getElementById('saude3')||root.document.getElementById('sheet-sync-card');if(ref)ref.after(d);else mais.appendChild(d);
+  // fica no lugar do cartão antigo (chave paga da RapidAPI), que some
+  const velho=root.document.getElementById('exdb-key-card');
+  if(velho)velho.before(d);else{const ref=root.document.getElementById('saude3')||root.document.getElementById('sheet-sync-card');if(ref)ref.after(d);else mais.appendChild(d);}
 }
 async function init(){
   montar();
