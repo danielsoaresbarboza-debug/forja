@@ -10,7 +10,7 @@ const K='edb-indice-v1';
 const S=()=>root.ForjaStorage||root.storage;
 let indice=null,carregando=null,progresso=0;
 
-const STOP=new Set(['with','the','a','on','of','to','and','for','in','grip','medium','version','variation','v','s','exercise','style','alternate','alternating','one','arm','single','both','wide','close','narrow','standing','seated']);
+const STOP=new Set(['with','the','a','on','of','to','and','for','in','version','variation','exercise','style','medium','grip','v','s']);
 const SIN={dumbbells:'dumbbell',db:'dumbbell',barbells:'barbell',bb:'barbell',machine:'lever',lever:'lever',cables:'cable',bands:'band',band:'band',resistance:'band',bodyweight:'body',weight:'',flyes:'fly',flies:'fly',flye:'fly',rows:'row',raises:'raise',curls:'curl',presses:'press',extensions:'extension',pulldowns:'pulldown',crunches:'crunch',squats:'squat',lunges:'lunge',dips:'dip',pushups:'pushup','push':'push',ups:'up',pullups:'pullup',kettlebells:'kettlebell',ez:'ez',bicep:'biceps',tricep:'triceps',lat:'lat',lats:'lat',bar:'barbell'};
 const EQUIP=new Set(['dumbbell','barbell','lever','cable','band','body','kettlebell','smith','ez','sled','medicine','stability','trap','roller']);
 function tokens(s){
@@ -40,11 +40,15 @@ async function http(url){
 async function baixar(onProg){
   const itens=[];let depois=null;
   for(let i=0;i<80;i++){
-    const j=await http(API+'?limit=25'+(depois?'&after='+encodeURIComponent(depois):''));
+    let j=null;
+    for(let t=0;t<6&&!j;t++){
+      try{j=await http(API+'?limit=25'+(depois?'&after='+encodeURIComponent(depois):''));}
+      catch(e){if(t===5)throw e;await new Promise(r=>setTimeout(r,8000*(t+1)));} // o ExerciseDB limita pedidos seguidos
+    }
     (j.data||[]).forEach(e=>itens.push([e.exerciseId,e.name,(e.targetMuscles||[])[0]||'',(e.bodyParts||[])[0]||'',(e.equipments||[])[0]||'']));
     progresso=itens.length;onProg&&onProg(itens.length,j.meta&&j.meta.total);
     if(!j.meta||!j.meta.hasNextPage||!j.meta.nextCursor)break;
-    depois=j.meta.nextCursor;
+    depois=j.meta.nextCursor;await new Promise(r=>setTimeout(r,2500));
   }
   if(itens.length<100)throw Error('lista incompleta');
   return itens;
@@ -56,7 +60,11 @@ async function carregar({forcar=false,onProg}={}){
     try{
       if(!forcar){const r=await S().get(K);if(r&&r.value){const o=JSON.parse(r.value);if(o.itens&&o.itens.length>100&&Date.now()-o.em<60*864e5){indice=prepara(o.itens);return indice;}}}
     }catch{}
-    const itens=await baixar(onProg);
+    let itens=null;
+    // 1º: a lista que o GitHub baixou e guardou junto do site (mesmo endereço, sem bloqueio)
+    try{const r=await root.fetch('edb-index.json',{cache:'no-cache'});if(r.ok){const o=await r.json();if(o.itens&&o.itens.length>1000)itens=o.itens;}}catch{}
+    // 2º: direto do ExerciseDB
+    if(!itens)itens=await baixar(onProg);
     try{await S().set(K,JSON.stringify({em:Date.now(),itens}));}catch{}
     indice=prepara(itens);return indice;
   })();
@@ -77,15 +85,25 @@ function achar(nome){
     if(r)alvo=r[1]&&r.length>5?r[1]:r[0];
   }
   const t=new Set(tokens(alvo));if(!t.size){cache.set(nome,null);return null;}
-  const eq=[...t].filter(x=>EQUIP.has(x));
+  let eq=[...t].filter(x=>EQUIP.has(x));
+  // sem equipamento no nome: usa o equipamento que a própria biblioteca do app conhece
+  let soCorpo=false;
+  if(!eq.length){
+    const nn=String(alvo).toLowerCase();
+    const r=(root.ForjaFreeExerciseLibrary||[]).find(x=>String(x[1]).toLowerCase()===nn);
+    const c=r?r[4]:((root.ForjaGymCatalog||[]).find(x=>String(x[0]).toLowerCase()===nn)||[])[3];
+    const MAPA={'Halteres':['dumbbell'],'Barra':['barbell'],'Barra W':['ez','barbell'],'Máquina':['lever','sled'],'Polia':['cable'],'Kettlebell':['kettlebell'],'Elástico':['band']};
+    if(c&&MAPA[c])eq=MAPA[c];else if(c==='Peso corporal')soCorpo=true;
+  }
   let melhor=null,nota=0;
   for(const it of indice){
     if(eq.length&&it.eq.length&&!eq.some(e=>it.eq.includes(e)))continue;
+    if(soCorpo&&it.eq.length&&!it.eq.includes('body'))continue;
     let inter=0;t.forEach(w=>{if(it.t.has(w))inter++;});if(!inter)continue;
-    const tam=eq.length?it.t.size:it.t.size-it.eq.length; // sem equipamento no nome: não penaliza o do ExerciseDB
+    const tam=[...t].some(x=>EQUIP.has(x))?it.t.size:it.t.size-it.eq.length; // sem equipamento no nome: não penaliza o do ExerciseDB
     const dice=2*inter/(t.size+Math.max(1,tam));
     if(inter/t.size<0.6)continue; // a maior parte do nome precisa bater (evita 'goblet squat' → 'smith squat')
-    if(dice>nota){nota=dice;melhor=it;}
+    if(dice>nota+1e-9||(Math.abs(dice-nota)<1e-9&&melhor&&it.t.size<melhor.t.size)){nota=dice;melhor=it;}
   }
   const r=nota>=0.66?melhor:null;cache.set(nome,r);return r;
 }

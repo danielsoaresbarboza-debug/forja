@@ -1,8 +1,9 @@
 (function(root,factory){const api=factory(root);if(typeof module==='object'&&module.exports)module.exports=api;root.ForjaChangelog=api;})(typeof globalThis!=='undefined'?globalThis:this,function(root){
 'use strict';
-const CURRENT_VERSION='3.8.2';
+const CURRENT_VERSION='3.9.0';
 
 const HISTORY=[
+  {v:'3.9.0',date:'2026-10-29',items:['GIFs: a lista do ExerciseDB (1.500 exercícios) agora vem junto do app, sem depender do servidor deles na hora','Cerca de 620 exercícios da biblioteca já têm GIF; a escolha usa o equipamento do exercício para não trocar halteres por máquina']},
   {v:'3.8.2',date:'2026-10-29',items:['GIFs: o download da lista tenta dois caminhos e mostra o motivo se falhar']},
   {v:'3.8.1',date:'2026-10-29',items:['Mais: o cartão antigo que pedia chave paga de GIFs saiu; no lugar dele fica "GIFs dos exercícios" (grátis)']},
   {v:'3.8.0',date:'2026-10-29',items:['Whey: marcar no Início lança o seu shake nas calorias do dia (Whey ISO X 30 g + 300 ml de leite desnatado = 225 kcal, 34 g de proteína)','Desmarcar o whey tira o lançamento das calorias']},
