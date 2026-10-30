@@ -7,6 +7,8 @@ import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.BasalMetabolicRateRecord
 import androidx.health.connect.client.records.BodyFatRecord
+import androidx.health.connect.client.records.DistanceRecord
+import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HydrationRecord
 import androidx.health.connect.client.records.SleepSessionRecord
@@ -46,6 +48,8 @@ object Saude {
         HealthPermission.getReadPermission(BasalMetabolicRateRecord::class),
         HealthPermission.getReadPermission(SleepSessionRecord::class),
         HealthPermission.getReadPermission(HydrationRecord::class),
+        HealthPermission.getReadPermission(DistanceRecord::class),
+        HealthPermission.getReadPermission(HeartRateRecord::class),
     )
     val TODAS: Set<String> = LEITURA + BACKGROUND
 
@@ -106,8 +110,20 @@ object Saude {
                     c.aggregate(AggregateRequest(setOf(TotalCaloriesBurnedRecord.ENERGY_TOTAL),
                         TimeRangeFilter.between(s.startTime, s.endTime)))[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories
                 }
+                val janela = TimeRangeFilter.between(s.startTime, s.endTime)
+                // distância: total do período; na piscina o Samsung às vezes só manda as voltas (laps)
+                var distM = tenta { c.aggregate(AggregateRequest(setOf(DistanceRecord.DISTANCE_TOTAL), janela))[DistanceRecord.DISTANCE_TOTAL]?.inMeters }
+                if (distM == null || distM <= 0.0) {
+                    val voltas = s.laps.mapNotNull { it.length?.inMeters }.sum()
+                    if (voltas > 0) distM = voltas
+                }
+                val fc = tenta { c.aggregate(AggregateRequest(setOf(HeartRateRecord.BPM_AVG, HeartRateRecord.BPM_MAX), janela)) }
                 arr.put(JSONObject()
                     .put("id", s.metadata.id)
+                    .put("distM", if (distM != null && distM > 0) Math.round(distM) else JSONObject.NULL)
+                    .put("fcMedia", fc?.get(HeartRateRecord.BPM_AVG) ?: JSONObject.NULL)
+                    .put("fcMax", fc?.get(HeartRateRecord.BPM_MAX) ?: JSONObject.NULL)
+                    .put("voltas", s.laps.size)
                     .put("tipo", tipo(s.exerciseType))
                     .put("exerciseType", s.exerciseType)
                     .put("title", s.title ?: "")
