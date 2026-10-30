@@ -1,0 +1,49 @@
+name: Lista de GIFs (ExerciseDB)
+on:
+  push:
+    branches: [gifs]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  lista:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar a lista grátis do ExerciseDB
+        run: |
+          set +e
+          echo "== cabeçalhos da API" > diag.txt
+          curl -sS -D - -o /dev/null -H "Origin: https://danielsoaresbarboza-debug.github.io" "https://oss.exercisedb.dev/api/v1/exercises?limit=1" >> diag.txt 2>&1
+          echo "== cabeçalhos do GIF" >> diag.txt
+          curl -sS -I "https://static.exercisedb.dev/media/01qpYSe.gif" >> diag.txt 2>&1
+          python3 - <<'PY'
+          import json, urllib.request, time
+          itens=[]; depois=None
+          for i in range(100):
+              url='https://oss.exercisedb.dev/api/v1/exercises?limit=25'+('&after='+depois if depois else '')
+              for t in range(4):
+                  try:
+                      req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 (forja-app; github actions)','Accept':'application/json'})
+                      j=json.load(urllib.request.urlopen(req,timeout=30)); break
+                  except Exception as e:
+                      print('erro',i,t,e); time.sleep(3)
+              else:
+                  break
+              for e in j.get('data',[]):
+                  itens.append([e['exerciseId'],e['name'],(e.get('targetMuscles') or [''])[0],(e.get('bodyParts') or [''])[0],(e.get('equipments') or [''])[0]])
+              m=j.get('meta') or {}
+              if not m.get('hasNextPage') or not m.get('nextCursor'): break
+              depois=m['nextCursor']; time.sleep(0.3)
+          print('total',len(itens))
+          json.dump({'fonte':'ExerciseDB V1 (oss.exercisedb.dev) — gifs em static.exercisedb.dev','em':int(time.time()*1000),'itens':itens},open('edb-index.json','w'),ensure_ascii=False,separators=(',',':'))
+          open('diag.txt','a').write('\n== total %d\n'%len(itens))
+          PY
+          ls -la edb-index.json
+      - name: Guardar no site (main) e o diagnóstico (gifs-log)
+        run: |
+          git config --global user.name "forja-bot"
+          git config --global user.email "forja-bot@users.noreply.github.com"
+          git clone -q --depth 1 --branch main "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" site
+          n=$(python3 -c "import json;print(len(json.load(open('edb-index.json'))['itens']))")
+          if [ "$n" -gt 1000 ]; then cp edb-index.json site/edb-index.json; cd site; git add edb-index.json; git commit -qm "Lista de GIFs do ExerciseDB ($n exercícios)" && git push -q; cd ..; fi
+          mkdir log && cd log && git init -q -b gifs-log && cp ../diag.txt . && git add diag.txt && git commit -qm diag && git push -f -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" gifs-log
