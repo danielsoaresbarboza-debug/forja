@@ -1,8 +1,9 @@
 (function(root,factory){const api=factory(root);if(typeof module==='object'&&module.exports)module.exports=api;root.ForjaChangelog=api;})(typeof globalThis!=='undefined'?globalThis:this,function(root){
 'use strict';
-const CURRENT_VERSION='3.5.1';
+const CURRENT_VERSION='3.6.0';
 
 const HISTORY=[
+  {v:'3.6.0',date:'2026-10-29',items:['Exercícios: dentro de cada grupo (Peito, Costas…) dá para filtrar por equipamento: Halteres, Barra, Máquina, Polia, Peso do corpo, Kettlebell, Elástico','Sem filtro, a lista vem separada por equipamento, com a quantidade de cada um','O mesmo filtro aparece ao adicionar exercício durante o treino','Fotos dos exercícios agora mostram o movimento (início e fim alternando, como um GIF)']},
   {v:'3.5.1',date:'2026-10-29',items:['Samsung Health: na primeira sincronização traz as últimas 2 semanas de treinos, peso e sono']},
   {v:'3.5.0',date:'2026-10-29',items:['App Android do Forja: lê o Samsung Health (pelo Health Connect) ao abrir e sozinho às 8h, 12h, 15h e 21h','Treinos do relógio viram atividades e somam na meta de comida; peso vai para o Corpo; % de gordura para Meus dados','Início mostra passos, calorias ativas e sono do dia','No app Android, o ditado e o login do Google usam o próprio Android','Mais → Samsung Health: autorizar, sincronizar agora e link para baixar o app']},
   {v:'3.4.0',date:'2026-10-27',items:['Comida: novo cartão "O que você comeu?" no topo. Escreva, dite (🎤 transcreve na hora), grave um áudio ou tire foto e toque em Calcular com IA','A IA separa os itens com quantidade, calorias e macros; dá para tirar um item, escolher a refeição e lançar','Ligar a IA direto no cartão: cole a chave do Gemini uma vez','Os atalhos ficaram dentro do cartão; "+ Adicionar" de cada refeição ganhou "✨ Descrever (IA)"','Gemini atualizado: o modelo antigo (2.0) foi desligado pelo Google; o app agora acha sozinho um modelo disponível. Vale também para a foto e o print do Zepp']},

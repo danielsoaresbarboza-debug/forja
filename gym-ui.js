@@ -156,7 +156,7 @@ function queryMatchesName(name,rawQuery){
 }
 
 // ================= EXERCISE PICKER =================
-let pickerFilter='Todos';
+let pickerFilter='Todos',pickerEquip='todos';
 async function openPickerForAdd(){
   tapFeedback();
   if(!activeSessionStartTs){showToast('Aperte "▶ Iniciar Treino" no topo primeiro.');return;}
@@ -170,7 +170,7 @@ function closePicker(){tapFeedback();const f=$('new-ex-form');if(f)f.style.displ
 function selectPickerFilter(btn){
   tapFeedback();
   root.document.querySelectorAll('#picker-card .filter-chip').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');pickerFilter=btn.dataset.filter;renderExercisePicker();
+  btn.classList.add('active');pickerFilter=btn.dataset.filter;pickerEquip='todos';renderExercisePicker();
   const search=$('gym-catalog-search');if(search)search.value='';
   renderCatalogByCategory();
 }
@@ -181,6 +181,7 @@ function renderCatalogByCategory(){
   const t=T();const wrap=$('picker-catalog-list');if(!wrap)return;
   const searchVal=($('gym-catalog-search')?.value||'').trim();
   if(searchVal)return; // busca por texto tem prioridade e já preenche esse mesmo wrap
+  if(pickerFilter==='Todos'||pickerFilter==='Cardio'){const r=$('picker-equip-row');if(r)r.innerHTML='';}
   if(pickerFilter==='Todos'){wrap.innerHTML='';return;}
   if(pickerFilter==='Cardio'){
     wrap.innerHTML=(t.CARDIO_EQUIPMENT||[]).map(eq=>`<div class="ex-chip" data-ex-name="${t.escapeHtml(eq.name)}" data-ex-src="equipment" onclick="ForjaGymUI.addCardioEquipment('${eq.name.replace(/'/g,"\\'")}')"><div class="ex-chip-ph">${eq.icon}</div><div class="lbl">${t.escapeHtml(eq.name)}</div></div>`).join('');
@@ -196,31 +197,33 @@ function renderCatalogByCategory(){
   };
   const catalog=root.ForjaGymCatalog||[];
   const freeLib=root.ForjaFreeExerciseLibrary||[];
-  const catalogMatches=catalog.filter(row=>matches(CATALOG_MUSCLE_MAP[row[2]])).slice(0,120);
-  const seen=new Set(catalogMatches.map(row=>normCatalogText(row[0])));
-  const freeMatches=freeLib.filter(row=>{
-    const key=normCatalogText(row[1]);
-    if(seen.has(key))return false;
-    return matches(FREE_EX_MUSCLE_MAP[row[3]]);
-  }).slice(0,80);
-  freeMatches.forEach(row=>seen.add(normCatalogText(row[1])));
-  const catalogChips=catalogMatches.map(row=>{
-    const[en,,muscle]=row;
-    const freeRow=freeLib.find(r=>normCatalogText(r[1])===normCatalogText(en));
-    const ptData=freeRow&&(root.ForjaFreeExercisePt||{})[freeRow[0]];
-    const displayName=dn(en);
-    const thumb=freeRow&&freeRow[5]?`<img src="${freeRow[5]}">`:`<div class="ex-chip-ph">🏋️</div>`;
-    return `<div class="ex-chip" data-ex-name="${t.escapeHtml(en)}" data-ex-src="catalog" data-ex-muscle="${t.escapeHtml(muscle)}" onclick="ForjaGymUI.addCatalogExercise('${en.replace(/'/g,"\\'")}','${muscle.replace(/'/g,"\\'")}')">${thumb}<div class="lbl">${t.escapeHtml(displayName)}</div></div>`;
-  });
-  const freeChips=freeMatches.map(row=>{
-    const[id,en,,musclePt,,img]=row;
-    const ptData=(root.ForjaFreeExercisePt||{})[id];
-    const displayName=dn(en);
-    const thumb=img?`<img src="${img}">`:`<div class="ex-chip-ph">🏋️</div>`;
-    return `<div class="ex-chip" data-ex-name="${t.escapeHtml(en)}" data-ex-src="free" data-ex-muscle="${t.escapeHtml(musclePt||'')}" onclick="ForjaGymUI.addFreeExercise('${en.replace(/'/g,"\\'")}','${(musclePt||'').replace(/'/g,"\\'")}')">${thumb}<div class="lbl">${t.escapeHtml(displayName)}</div></div>`;
-  });
-  wrap.innerHTML=(catalogChips.join('')+freeChips.join(''))||'<div class="empty">Nenhum exercício encontrado nessa categoria.</div>';
+  const E=root.ForjaEquip;
+  const itens=[];const seen=new Set();
+  catalog.forEach(row=>{if(!matches(CATALOG_MUSCLE_MAP[row[2]]))return;const k=normCatalogText(row[0]);if(seen.has(k))return;seen.add(k);itens.push({src:'catalog',row,g:E?E.grupoDe(row[3]):'outros'});});
+  freeLib.forEach(row=>{const k=normCatalogText(row[1]);if(seen.has(k))return;if(!matches(FREE_EX_MUSCLE_MAP[row[3]]))return;seen.add(k);itens.push({src:'free',row,g:E?E.grupoDe(row[4]):'outros'});});
+  const cont={};itens.forEach(i=>{cont[i.g]=(cont[i.g]||0)+1;});
+  if(pickerEquip!=='todos'&&!cont[pickerEquip])pickerEquip='todos';
+  let row=$('picker-equip-row');
+  if(!row){row=root.document.createElement('div');row.id='picker-equip-row';wrap.before(row);}
+  row.innerHTML=E&&itens.length?`<div class="eq-lbl">Equipamento</div>${E.chips(cont,pickerEquip,'ForjaGymUI.setPickerEquip')}`:'';
+  let lista=pickerEquip==='todos'?itens:itens.filter(i=>i.g===pickerEquip);
+  if(E&&pickerEquip==='todos')lista=[...lista].sort((x,y)=>E.ordem(x.g)-E.ordem(y.g));
+  let ultimo=null;
+  wrap.innerHTML=lista.slice(0,200).map(it=>{
+    let cab='';
+    if(E&&pickerEquip==='todos'&&it.g!==ultimo){ultimo=it.g;cab=`<div class="eq-sec">${E.nomeGrupo(it.g)} <span>${cont[it.g]}</span></div>`;}
+    if(it.src==='catalog'){
+      const[en,,muscle]=it.row;
+      const freeRow=freeLib.find(r=>normCatalogText(r[1])===normCatalogText(en));
+      const thumb=freeRow&&freeRow[5]?`<img src="${freeRow[5]}" loading="lazy">`:`<div class="ex-chip-ph">🏋️</div>`;
+      return cab+`<div class="ex-chip" data-ex-name="${t.escapeHtml(en)}" data-ex-src="catalog" data-ex-muscle="${t.escapeHtml(muscle)}" onclick="ForjaGymUI.addCatalogExercise('${en.replace(/'/g,"\\'")}','${muscle.replace(/'/g,"\\'")}')">${thumb}<div class="lbl">${t.escapeHtml(dn(en))}</div></div>`;
+    }
+    const[,en,,musclePt,,img]=it.row;
+    const thumb=img?`<img src="${img}" loading="lazy">`:`<div class="ex-chip-ph">🏋️</div>`;
+    return cab+`<div class="ex-chip" data-ex-name="${t.escapeHtml(en)}" data-ex-src="free" data-ex-muscle="${t.escapeHtml(musclePt||'')}" onclick="ForjaGymUI.addFreeExercise('${en.replace(/'/g,"\\'")}','${(musclePt||'').replace(/'/g,"\\'")}')">${thumb}<div class="lbl">${t.escapeHtml(dn(en))}</div></div>`;
+  }).join('')||'<div class="empty">Nenhum exercício encontrado nessa categoria.</div>';
 }
+function setPickerEquip(k){tapFeedback();pickerEquip=k;renderCatalogByCategory();}
 async function renderExercisePicker(){
   const t=T();const wrap=$('picker-list');if(!wrap)return;
   const names=await t.getRecentExerciseNames();
@@ -1727,7 +1730,7 @@ return{
   startWorkoutSession,endWorkoutSession,openPickerForAdd,closePicker,selectPickerFilter,showNewExerciseForm,selectMuscle,createNewExercise,
   searchCatalog,addCatalogExercise,addFreeExercise,addCardioEquipment,runRemapHistory,renderReadyWorkouts,useReadyWorkout,suggestMuscleFromName,setMuscleForNew,
   renderWorkoutGroups,showNewGroupForm,closeGroupForm,toggleGroupExercise,editWorkoutGroup,saveWorkoutGroup,deleteWorkoutGroup,loadWorkoutGroupToSession,
-  askDeleteSet,deleteSetForCard,askRemoveExercise,addExerciseToSession,removeExerciseCard,toggleBodyCard,applyBodyCardState,toggleRestPop,openExSheet,closeExSheet,setSessionsMetric,showSummary,toggleMoreOpen,openExercisePhotoPopup,pickExercisePhoto,adjustCardWeight,cycleWeightMode,adjustPendingReps,logSetForCard,logCardioSetForCard,toggleWarmupMode,setCardRir,undoLastSetForCard,finishExercise,reopenExercise,
+  setPickerEquip,askDeleteSet,deleteSetForCard,askRemoveExercise,addExerciseToSession,removeExerciseCard,toggleBodyCard,applyBodyCardState,toggleRestPop,openExSheet,closeExSheet,setSessionsMetric,showSummary,toggleMoreOpen,openExercisePhotoPopup,pickExercisePhoto,adjustCardWeight,cycleWeightMode,adjustPendingReps,logSetForCard,logCardioSetForCard,toggleWarmupMode,setCardRir,undoLastSetForCard,finishExercise,reopenExercise,
   toggleProgressionAnalysis,toggleCardTipEdit,saveCardTip,toggleLibraryOpen,
   adjustRestDuration,toggleCustomRest,adjustCustomRestMin,adjustCustomRestSec,applyCustomRest,startRestTimer,adiarRest,pularRest,openRestModal,closeRestModal,
   selectRpe,saveSessionRpe,skipSessionRpe,

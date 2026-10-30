@@ -13,6 +13,7 @@
   const hay=(n)=>root.ForjaExerciseNames&&root.ForjaExerciseNames.haystack?root.ForjaExerciseNames.haystack(n):normText(n);
 
   let filter='Todos';
+  let equip='todos';
   let query='';
   let catalogLimit=48;
   const CATALOG_PAGE=48;
@@ -114,6 +115,7 @@
     root.document.querySelectorAll('#tab-biblioteca .filter-chip').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     filter=btn.dataset.libFilter;
+    equip='todos';
     catalogLimit=CATALOG_PAGE;
     if(filter==='Favoritos'){
       // Uma busca deixada de uma categoria anterior não deveria esconder
@@ -154,7 +156,9 @@
     const q=normText(query);
     const filtered=names.filter(name=>{
       if(q&&!hay(name).includes(q))return false;
-      return matchesFilter(t.getMuscleSync(name));
+      if(!matchesFilter(t.getMuscleSync(name)))return false;
+      if(equip!=='todos'&&root.ForjaEquip){const gq=root.ForjaEquip.grupoPorNome(name);if(gq&&gq!==equip)return false;}
+      return true;
     });
     if(!filtered.length){
       wrap.innerHTML='<div class="empty">Nenhum exercício seu nessa categoria ainda. Os que você usar nos treinos (ou fotografar) aparecem aqui — a biblioteca completa está logo abaixo.</div>';
@@ -172,14 +176,21 @@
     wrap.innerHTML=rows.join('');
   }
 
+  function equipRow(contagens,mostrar){
+    let row=$('lib-equip-row');
+    if(!row){const last=[...root.document.querySelectorAll('#tab-biblioteca .filter-chip-row')].pop();if(!last)return;row=root.document.createElement('div');row.id='lib-equip-row';last.after(row);}
+    row.innerHTML=mostrar&&root.ForjaEquip?`<div class="eq-lbl">Equipamento</div>${root.ForjaEquip.chips(contagens,equip,'ForjaExerciseLibraryTab.setEquip')}`:'';
+  }
+  function setEquip(k){equip=k;catalogLimit=CATALOG_PAGE;render();}
+
   function renderCatalog(){
     const t=T();const wrap=$('lib-catalog-list'),hint=$('lib-catalog-hint'),moreBtn=$('lib-load-more-btn');
     if(!wrap)return;
     const g=G();
     if(!g){wrap.innerHTML='';return;}
+    const E=root.ForjaEquip;
     if(filter==='Cardio'){
-      // Esteira, bike, escada etc. não existem nos bancos de exercícios (só musculação)
-      // — essa listinha fixa cobre o que normalmente tem na academia.
+      equipRow({},false);
       if(moreBtn)moreBtn.style.display='none';
       const q=normText(query);
       const equipment=(t.CARDIO_EQUIPMENT||[]).filter(eq=>!q||normText(eq.name).includes(q));
@@ -200,49 +211,48 @@
 
     const catalogAll=catalog.filter(row=>matchesFilter(CATALOG_MUSCLE_MAP[row[2]])&&textMatches(row[0],row[1],row[2],dn(row[0])));
     const seen=new Set();
-    const catalogDeduped=[];
-    for(const row of catalogAll){const key=normText(row[0]);if(seen.has(key))continue;seen.add(key);catalogDeduped.push(row);}
-    const freeAll=freeLib.filter(row=>{
-      const key=normText(row[1]);if(seen.has(key))return false;
-      return matchesFilter(FREE_EX_MUSCLE_MAP[row[3]])&&textMatches(row[1],row[2],row[3],dn(row[1]));
+    const itens=[];
+    for(const row of catalogAll){const key=normText(row[0]);if(seen.has(key))continue;seen.add(key);itens.push({src:'catalog',row,g:E?E.grupoDe(row[3]):'outros'});}
+    freeLib.forEach(row=>{
+      const key=normText(row[1]);if(seen.has(key))return;
+      if(matchesFilter(FREE_EX_MUSCLE_MAP[row[3]])&&textMatches(row[1],row[2],row[3],dn(row[1]))){seen.add(key);itens.push({src:'free',row,g:E?E.grupoDe(row[4]):'outros'});}
     });
-    freeAll.forEach(row=>seen.add(normText(row[1])));
 
-    const totalAvailable=catalogDeduped.length+freeAll.length;
     if(filter==='Todos'&&!q){
+      equipRow({},false);
       wrap.innerHTML='';
       if(hint)hint.textContent='Toque numa categoria acima ou busque pelo nome pra ver os exercícios da biblioteca completa.';
       if(moreBtn)moreBtn.style.display='none';
       return;
     }
-    if(hint)hint.textContent=totalAvailable?`${totalAvailable} exercício(s) encontrado(s).`:'';
+    const contagens={};itens.forEach(i=>{contagens[i.g]=(contagens[i.g]||0)+1;});
+    if(equip!=='todos'&&!contagens[equip])equip='todos';
+    equipRow(contagens,itens.length>0);
+    let lista=equip==='todos'?itens:itens.filter(i=>i.g===equip);
+    if(E&&equip==='todos')lista=[...lista].sort((a,b)=>E.ordem(a.g)-E.ordem(b.g));
+    const totalAvailable=lista.length;
+    if(hint)hint.textContent=totalAvailable?`${totalAvailable} exercício(s)${equip!=='todos'&&E?' com '+E.nomeGrupo(equip).toLowerCase():''}.`:'';
 
-    const catalogSlice=catalogDeduped.slice(0,catalogLimit);
-    const freeBudget=Math.max(0,catalogLimit-catalogSlice.length);
-    const freeSlice=freeAll.slice(0,freeBudget);
-
-    const catalogChips=catalogSlice.map(row=>{
-      const[en,,muscle]=row;
-      const freeRow=freeLib.find(r=>normText(r[1])===normText(en));
-      const ptData=freeRow&&(root.ForjaFreeExercisePt||{})[freeRow[0]];
-      const displayName=dn(en);
-      const thumb=freeRow&&freeRow[5]?`<img src="${freeRow[5]}">`:`<div class="ex-chip-ph">🏋️</div>`;
-      const enEsc=en.replace(/'/g,"\\'"),muscleEsc=muscle.replace(/'/g,"\\'");
-      const fav=isFavoriteSync(en);
-      return `<div class="ex-chip" onclick="ForjaExerciseLibraryTab.showDetail('${enEsc}','catalog','${muscleEsc}')"><button type="button" class="ex-fav-star${fav?' on':''}" onclick="event.stopPropagation();ForjaExerciseLibraryTab.toggleFavorite('${enEsc}','catalog','${muscleEsc}')">${fav?'★':'☆'}</button>${thumb}<div class="lbl">${t.escapeHtml(displayName)}</div></div>`;
-    });
-    const freeChips=freeSlice.map(row=>{
-      const[id,en,,musclePt,,img]=row;
-      const ptData=(root.ForjaFreeExercisePt||{})[id];
-      const displayName=dn(en);
-      const thumb=img?`<img src="${img}">`:`<div class="ex-chip-ph">🏋️</div>`;
+    let ultimo=null;
+    const html=lista.slice(0,catalogLimit).map(it=>{
+      let cab='';
+      if(E&&equip==='todos'&&it.g!==ultimo){ultimo=it.g;cab=`<div class="eq-sec">${E.nomeGrupo(it.g)} <span>${contagens[it.g]}</span></div>`;}
+      if(it.src==='catalog'){
+        const[en,,muscle]=it.row;
+        const freeRow=freeLib.find(r=>normText(r[1])===normText(en));
+        const thumb=freeRow&&freeRow[5]?`<img src="${freeRow[5]}" loading="lazy">`:`<div class="ex-chip-ph">🏋️</div>`;
+        const enEsc=en.replace(/'/g,"\\'"),muscleEsc=muscle.replace(/'/g,"\\'");
+        const fav=isFavoriteSync(en);
+        return cab+`<div class="ex-chip" onclick="ForjaExerciseLibraryTab.showDetail('${enEsc}','catalog','${muscleEsc}')"><button type="button" class="ex-fav-star${fav?' on':''}" onclick="event.stopPropagation();ForjaExerciseLibraryTab.toggleFavorite('${enEsc}','catalog','${muscleEsc}')">${fav?'★':'☆'}</button>${thumb}<div class="lbl">${t.escapeHtml(dn(en))}</div></div>`;
+      }
+      const[,en,,musclePt,,img]=it.row;
+      const thumb=img?`<img src="${img}" loading="lazy">`:`<div class="ex-chip-ph">🏋️</div>`;
       const enEsc=en.replace(/'/g,"\\'"),muscleEsc=(musclePt||'').replace(/'/g,"\\'");
       const fav=isFavoriteSync(en);
-      return `<div class="ex-chip" onclick="ForjaExerciseLibraryTab.showDetail('${enEsc}','free','${muscleEsc}')"><button type="button" class="ex-fav-star${fav?' on':''}" onclick="event.stopPropagation();ForjaExerciseLibraryTab.toggleFavorite('${enEsc}','free','${muscleEsc}')">${fav?'★':'☆'}</button>${thumb}<div class="lbl">${t.escapeHtml(displayName)}</div></div>`;
-    });
-    wrap.innerHTML=(catalogChips.join('')+freeChips.join(''))||'<div class="empty">Nenhum exercício encontrado.</div>';
-    const shown=catalogSlice.length+freeSlice.length;
-    if(moreBtn)moreBtn.style.display=(shown<totalAvailable)?'block':'none';
+      return cab+`<div class="ex-chip" onclick="ForjaExerciseLibraryTab.showDetail('${enEsc}','free','${muscleEsc}')"><button type="button" class="ex-fav-star${fav?' on':''}" onclick="event.stopPropagation();ForjaExerciseLibraryTab.toggleFavorite('${enEsc}','free','${muscleEsc}')">${fav?'★':'☆'}</button>${thumb}<div class="lbl">${t.escapeHtml(dn(en))}</div></div>`;
+    }).join('');
+    wrap.innerHTML=html||'<div class="empty">Nenhum exercício encontrado.</div>';
+    if(moreBtn)moreBtn.style.display=(Math.min(catalogLimit,totalAvailable)<totalAvailable)?'block':'none';
   }
 
   function loadMore(){
@@ -322,9 +332,9 @@
     card.style.display='block';
     card.innerHTML=`
       <div class="card-head"><h2>${t.escapeHtml(namePt)}</h2><button class="switch-btn" onclick="ForjaExerciseLibraryTab.closeDetail()">Fechar</button></div>
-      ${photo?`<img class="library-media" src="${photo}" alt="" draggable="false">`:(equipIcon?`<div class="ex-chip-ph" style="height:120px;font-size:48px;">${equipIcon}</div>`:'')}
+      ${photo?(root.ForjaEquip&&!myPhoto?root.ForjaEquip.mov(photo,'library-media'):`<img class="library-media" src="${photo}" alt="" draggable="false">`):(equipIcon?`<div class="ex-chip-ph" style="height:120px;font-size:48px;">${equipIcon}</div>`:'')}
       ${nameEn?`<p class="calc-formula-note">🇬🇧 Nome no aparelho/inglês: <b>${t.escapeHtml(nameEn)}</b></p>`:''}
-      <p class="calc-formula-note">Grupo muscular: ${t.escapeHtml(muscle)}${isCardio?' (registro por tempo/distância/kcal)':''}${sub?` · Última vez: ${t.escapeHtml(sub)}`:''}${myPhoto?' · 📸 Foto sua':''}</p>
+      <p class="calc-formula-note">Grupo muscular: ${t.escapeHtml(muscle)}${root.ForjaEquip&&!isCardio&&!/^Equipamento:/.test(desc||'')&&root.ForjaEquip.grupoPorNome(name)?` · Equipamento: ${t.escapeHtml(root.ForjaEquip.nomeGrupo(root.ForjaEquip.grupoPorNome(name)))}`:''}${isCardio?' (registro por tempo/distância/kcal)':''}${sub?` · Última vez: ${t.escapeHtml(sub)}`:''}${myPhoto?' · 📸 Foto sua':''}</p>
       ${desc?`<p class="calc-formula-note">${t.escapeHtml(desc)}</p>`:''}
       <div class="water-action-row">
         <button type="button" class="primary" onclick="ForjaExerciseLibraryTab.useNow('${nameEsc}','${muscleEsc}',${isCardio})">Usar no treino de hoje</button>
@@ -377,5 +387,5 @@
     renderCatalog();
   }
 
-  return{pickPhoto,selectFilter,onSearch,showDetail,closeDetail,useNow,loadMore,render,buildNamesAndDesc,toggleFavorite,isFavoriteSync,loadFavCache};
+  return{setEquip,pickPhoto,selectFilter,onSearch,showDetail,closeDetail,useNow,loadMore,render,buildNamesAndDesc,toggleFavorite,isFavoriteSync,loadFavCache};
 });

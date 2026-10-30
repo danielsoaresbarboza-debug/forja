@@ -60,6 +60,7 @@ const SHELL_FILES = [
   'gym-catalog.js',
   'wger-library.js',
   'free-exercise-library.js',
+  'forja-equip.js',
   'free-exercise-pt.js',
   'gym-pt-synonyms.js',
   'exercise-names-pt.js',
