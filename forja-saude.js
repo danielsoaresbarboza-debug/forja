@@ -71,7 +71,7 @@ async function importar({silencioso=true,ler=true}={}){
     let r=await aplicar(g?.dias||[]);
     if(ler){
       const st=await p.status().catch(()=>null);ultimoStatus=st;
-      if(st&&st.autorizado){const lido=await p.ler({dias:3});const r2=await aplicar(lido?.dias||[]);r={treinos:r.treinos+r2.treinos,peso:r.peso+r2.peso};}
+      if(st&&st.autorizado){const tem=Object.keys(await getJ('f3-saude-dias',{})).length>1;const lido=await p.ler({dias:tem?3:14});const r2=await aplicar(lido?.dias||[]);r={treinos:r.treinos+r2.treinos,peso:r.peso+r2.peso};}
     }
     const partes=[];if(r.treinos)partes.push(`${r.treinos} treino${r.treinos>1?'s':''}`);if(r.peso)partes.push('peso');
     if(partes.length)toast(`⌚ Do Samsung Health: ${partes.join(' e ')}`);
