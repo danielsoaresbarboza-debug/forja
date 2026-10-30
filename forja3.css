@@ -767,3 +767,40 @@ body.f3 main .switch-btn{min-height:40px;padding:0 14px;border-radius:12px;borde
 .edb figcaption{font-size:11px;color:#555;padding:4px 10px;background:#f2f2f2}
 .ex-longpress-card .edb img{max-height:260px}
 body.f3 #exdb-key-card{display:none!important}
+/* segurar o dedo no exercício abre o GIF: sem seleção de texto nem menu do sistema */
+[data-ex-name]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.ex-longpress-hint{font-size:12px;color:var(--f3-tx-3);text-align:center;margin:6px 0 0}
+
+/* ===== 3.10 Montar por músculo / treinos de sempre / semana ===== */
+.mt-hero{margin:10px 0}
+.mt-montar{display:flex;align-items:center;gap:12px;width:100%;min-height:64px;padding:10px 14px;border-radius:18px;border:1px solid var(--f3-borda);background:var(--f3-carvao-2);color:var(--f3-tx);font-family:var(--f3-ui);text-align:left;cursor:pointer}
+.mt-montar>span:first-child{font-size:24px}
+.mt-montar b{display:block;font-size:17px} .mt-montar small{color:var(--f3-tx-3);font-size:14px}
+.mt-montar>span:nth-child(2){flex:1} .mt-montar i{font-style:normal;font-size:22px;color:var(--f3-tx-3)}
+.mt-rot{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mt-rot button{min-height:58px;padding:8px 12px;border-radius:14px;border:1px solid var(--f3-borda);background:var(--f3-vidro);color:var(--f3-tx);font-family:var(--f3-ui);text-align:left}
+.mt-rot b{display:block;font-size:16px;color:var(--f3-treino)} .mt-rot small{font-size:13px;color:var(--f3-tx-2)}
+.mt-musc{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
+.mt-musc button{min-height:56px;border-radius:14px;border:1px solid var(--f3-borda);background:var(--f3-vidro);color:var(--f3-tx);font-family:var(--f3-ui);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.mt-musc button b{font-size:15px} .mt-musc button small{font-size:12px;color:var(--f3-tx-3)}
+.mt-musc button.on{background:var(--f3-treino);border-color:var(--f3-treino);color:#fff} .mt-musc button.on small{color:rgba(255,255,255,.8)}
+.mt-grupo{margin-top:6px}
+.mt-ex{display:flex;align-items:center;gap:10px;width:100%;min-height:54px;margin:0 0 6px;padding:8px 10px;border-radius:13px;border:1px solid var(--f3-aresta);background:var(--f3-chapa);color:var(--f3-tx);font-family:var(--f3-ui);text-align:left}
+.mt-ex i{flex:none;width:26px;height:26px;border-radius:8px;border:2px solid var(--f3-borda);display:grid;place-items:center;font-style:normal;font-weight:900}
+.mt-ex.on{border-color:rgba(62,224,143,.45);background:rgba(62,224,143,.08)} .mt-ex.on i{background:var(--f3-ok);border-color:var(--f3-ok);color:#03170c}
+.mt-ex b{display:block;font-size:15px;line-height:1.25} .mt-ex small{font-size:13px;color:var(--f3-tx-3)}
+.mt-rodape{position:sticky;bottom:0;padding-top:8px;background:linear-gradient(transparent,var(--f3-carvao-2) 30%)}
+.mt-rodape .f3-cta:disabled{opacity:.5}
+.semana[role=button]{cursor:pointer}
+.sm-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.sm-top .f3-t{margin:0}
+.sm-top button{width:44px;height:44px;border-radius:12px;border:1px solid var(--f3-borda);background:var(--f3-vidro);color:var(--f3-tx);font-size:22px}
+.sm-top button:disabled{opacity:.35}
+.sm-dia{padding:10px 0;border-top:1px solid var(--f3-aresta)}
+.sm-cab{display:flex;align-items:baseline;gap:10px} .sm-cab b{font-family:var(--f3-num);font-size:15px;min-width:78px}
+.sm-cab span{font-weight:700;color:var(--f3-treino);font-size:14px} .sm-cab span.v{color:var(--f3-tx-3);font-weight:600}
+.sm-dia.h .sm-cab b{color:var(--f3-treino)}
+.sm-ex{display:flex;justify-content:space-between;gap:8px;padding:4px 0 0 88px;font-size:14px;color:var(--f3-tx-2)}
+.sm-ex small{font-family:var(--f3-num);color:var(--f3-tx-3);white-space:nowrap}
+.mt-hero .f3-lbl,.mt-hero .f3-nota{padding:0 4px}
+.mt-hero:empty{display:none}

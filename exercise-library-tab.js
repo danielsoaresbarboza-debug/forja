@@ -88,7 +88,7 @@
       const nameEsc=name.replace(/'/g,"\\'"),hintEsc=(muscleHint||'').replace(/'/g,"\\'");
       const args=`'${nameEsc}','${source}'${muscleHint?`,'${hintEsc}'`:''}`;
       const favArgs=`'${nameEsc}','${source}','${hintEsc}'`;
-      return `<div class="ex-chip ex-chip-fav" onclick="ForjaExerciseLibraryTab.showDetail(${args})"><button type="button" class="ex-fav-star on" onclick="event.stopPropagation();ForjaExerciseLibraryTab.toggleFavorite(${favArgs})">★</button>${img}<div class="lbl">${t.escapeHtml(dn(name))}</div>${sub?`<div class="sub">${t.escapeHtml(sub)}</div>`:''}</div>`;
+      return `<div class="ex-chip ex-chip-fav" data-ex-name="${t.escapeHtml(name)}" data-ex-src="${source}" onclick="ForjaExerciseLibraryTab.showDetail(${args})"><button type="button" class="ex-fav-star on" onclick="event.stopPropagation();ForjaExerciseLibraryTab.toggleFavorite(${favArgs})">★</button>${img}<div class="lbl">${t.escapeHtml(dn(name))}</div>${sub?`<div class="sub">${t.escapeHtml(sub)}</div>`:''}</div>`;
     }));
     wrap.innerHTML=rows.join('');
   }
@@ -171,7 +171,7 @@
       const sub=await lastSetSummary(name);
       const fav=isFavoriteSync(name);
       const nameEsc=name.replace(/'/g,"\\'");
-      return `<div class="ex-chip ex-chip-mine" onclick="ForjaExerciseLibraryTab.showDetail('${nameEsc}','mine')"><button type="button" class="ex-fav-star${fav?' on':''}" onclick="event.stopPropagation();ForjaExerciseLibraryTab.toggleFavorite('${nameEsc}','mine')">${fav?'★':'☆'}</button>${img}<div class="lbl">${t.escapeHtml(dn(name))}</div>${sub?`<div class="sub">${t.escapeHtml(sub)}</div>`:''}</div>`;
+      return `<div class="ex-chip ex-chip-mine" data-ex-name="${t.escapeHtml(name)}" data-ex-src="mine" onclick="ForjaExerciseLibraryTab.showDetail('${nameEsc}','mine')"><button type="button" class="ex-fav-star${fav?' on':''}" onclick="event.stopPropagation();ForjaExerciseLibraryTab.toggleFavorite('${nameEsc}','mine')">${fav?'★':'☆'}</button>${img}<div class="lbl">${t.escapeHtml(dn(name))}</div>${sub?`<div class="sub">${t.escapeHtml(sub)}</div>`:''}</div>`;
     }));
     wrap.innerHTML=rows.join('');
   }
@@ -231,7 +231,7 @@
     let lista=equip==='todos'?itens:itens.filter(i=>i.g===equip);
     if(E&&equip==='todos')lista=[...lista].sort((a,b)=>E.ordem(a.g)-E.ordem(b.g));
     const totalAvailable=lista.length;
-    if(hint)hint.textContent=totalAvailable?`${totalAvailable} exercício(s)${equip!=='todos'&&E?' com '+E.nomeGrupo(equip).toLowerCase():''}.`:'';
+    if(hint)hint.textContent=totalAvailable?`${totalAvailable} exercício(s)${equip!=='todos'&&E?' com '+E.nomeGrupo(equip).toLowerCase():''}. Segure o dedo num exercício para ver o GIF.`:'';
 
     let ultimo=null;
     const html=lista.slice(0,catalogLimit).map(it=>{
@@ -243,13 +243,13 @@
         const thumb=freeRow&&freeRow[5]?`<img src="${freeRow[5]}" loading="lazy">`:`<div class="ex-chip-ph">🏋️</div>`;
         const enEsc=en.replace(/'/g,"\\'"),muscleEsc=muscle.replace(/'/g,"\\'");
         const fav=isFavoriteSync(en);
-        return cab+`<div class="ex-chip" onclick="ForjaExerciseLibraryTab.showDetail('${enEsc}','catalog','${muscleEsc}')"><button type="button" class="ex-fav-star${fav?' on':''}" onclick="event.stopPropagation();ForjaExerciseLibraryTab.toggleFavorite('${enEsc}','catalog','${muscleEsc}')">${fav?'★':'☆'}</button>${thumb}<div class="lbl">${t.escapeHtml(dn(en))}</div></div>`;
+        return cab+`<div class="ex-chip" data-ex-name="${t.escapeHtml(en)}" data-ex-src="catalog" data-ex-muscle="${t.escapeHtml(muscle)}" onclick="ForjaExerciseLibraryTab.showDetail('${enEsc}','catalog','${muscleEsc}')"><button type="button" class="ex-fav-star${fav?' on':''}" onclick="event.stopPropagation();ForjaExerciseLibraryTab.toggleFavorite('${enEsc}','catalog','${muscleEsc}')">${fav?'★':'☆'}</button>${thumb}<div class="lbl">${t.escapeHtml(dn(en))}</div></div>`;
       }
       const[,en,,musclePt,,img]=it.row;
       const thumb=img?`<img src="${img}" loading="lazy">`:`<div class="ex-chip-ph">🏋️</div>`;
       const enEsc=en.replace(/'/g,"\\'"),muscleEsc=(musclePt||'').replace(/'/g,"\\'");
       const fav=isFavoriteSync(en);
-      return cab+`<div class="ex-chip" onclick="ForjaExerciseLibraryTab.showDetail('${enEsc}','free','${muscleEsc}')"><button type="button" class="ex-fav-star${fav?' on':''}" onclick="event.stopPropagation();ForjaExerciseLibraryTab.toggleFavorite('${enEsc}','free','${muscleEsc}')">${fav?'★':'☆'}</button>${thumb}<div class="lbl">${t.escapeHtml(dn(en))}</div></div>`;
+      return cab+`<div class="ex-chip" data-ex-name="${t.escapeHtml(en)}" data-ex-src="free" data-ex-muscle="${t.escapeHtml(musclePt||'')}" onclick="ForjaExerciseLibraryTab.showDetail('${enEsc}','free','${muscleEsc}')"><button type="button" class="ex-fav-star${fav?' on':''}" onclick="event.stopPropagation();ForjaExerciseLibraryTab.toggleFavorite('${enEsc}','free','${muscleEsc}')">${fav?'★':'☆'}</button>${thumb}<div class="lbl">${t.escapeHtml(dn(en))}</div></div>`;
     }).join('');
     wrap.innerHTML=html||'<div class="empty">Nenhum exercício encontrado.</div>';
     if(moreBtn)moreBtn.style.display=(Math.min(catalogLimit,totalAvailable)<totalAvailable)?'block':'none';

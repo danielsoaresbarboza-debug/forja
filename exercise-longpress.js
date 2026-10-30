@@ -63,7 +63,7 @@
   function clearTimer(){if(timer){clearTimeout(timer);timer=null;}activeChip=null;}
 
   function onPointerDown(e){
-    const chip=e.target.closest('.ex-chip[data-ex-name]');
+    const chip=e.target.closest('[data-ex-name]');
     if(!chip)return;
     activeChip=chip;startX=e.clientX;startY=e.clientY;
     clearTimeout(timer);
@@ -92,7 +92,7 @@
   // "abrir link"...). Aqui esse menu é bloqueado só nos cartões de exercício e nas fotos do app.
   function onContextMenu(e){
     const t=e.target;
-    if(t&&t.closest&&t.closest('.ex-chip,.ex-photo-wrap,.ex-card-photo,.ex-longpress-card,.library-media,.ex-card-thumb')){e.preventDefault();}
+    if(t&&t.closest&&t.closest('.ex-chip,.ex-row,.today-row,.ex-photo-wrap,.ex-card-photo,.ex-longpress-card,.library-media,.ex-card-thumb')){e.preventDefault();}
   }
   function init(){
     if(!root.document)return;

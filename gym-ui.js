@@ -906,7 +906,7 @@ function buildRowHtml(idx){
   const rm=canRemove?`<button type="button" class="row-rm" aria-label="Remover exercício" onclick="event.stopPropagation();ForjaGymUI.removeExerciseCard(${idx})">✕</button>`:'';
   const firstPending=sessionExercises.findIndex(e=>!e.finished);
   const cls=ex.finished?' done':((done&&!ex.finished)||(!done&&idx===firstPending&&!sessionExercises.some(e=>!e.finished&&workDone(e)))?' started':'');
-  return `<div class="ex-row${cls}" id="ex-card-${idx}" role="button" tabindex="0" onclick="ForjaGymUI.openExSheet(${idx})">${thumbHtml(photo,'sm')}<div class="row-info"><div class="row-name">${t.escapeHtml(dn(ex.name))}</div><small>${t.escapeHtml(sub)}</small>${dots}</div>${rm}<span class="row-st">${t.escapeHtml(st)}</span></div>`;
+  return `<div class="ex-row${cls}" id="ex-card-${idx}" data-ex-name="${t.escapeHtml(ex.name)}" data-ex-src="mine" role="button" tabindex="0" onclick="ForjaGymUI.openExSheet(${idx})">${thumbHtml(photo,'sm')}<div class="row-info"><div class="row-name">${t.escapeHtml(dn(ex.name))}</div><small>${t.escapeHtml(sub)}</small>${dots}</div>${rm}<span class="row-st">${t.escapeHtml(st)}</span></div>`;
 }
 
 // ---------- janela do exercício ----------
@@ -1190,9 +1190,9 @@ async function renderHoje(){
   const ng=await nextGroup();
   let html;
   if(!ng){
-    html=`<div class="hj"><div class="hj-d">${dstr}</div><div class="hj-t">Monte seu treino</div><div class="hj-s">Crie seus treinos A, B, C ou use um pronto. Depois o app sugere qual é o da vez.</div>
-      <button type="button" class="hj-go" onclick="ForjaGymUI.openGroupsCard('ready-workouts-card')">Ver treinos prontos<i>▶</i></button>
-      <div class="hj-trocar"><button type="button" onclick="ForjaGymUI.startFreeWorkout()">Treino livre</button><button type="button" onclick="ForjaGymUI.openGroupsCard('workout-groups-card',true)">+ Criar treino</button></div></div>`;
+    html=`<div class="hj"><div class="hj-d">${dstr}</div><div class="hj-t">Monte seu treino</div><div class="hj-s">Escolha os músculos de hoje e o app sugere os exercícios. Com o tempo, ele aprende seus treinos A, B, C.</div>
+      <button type="button" class="hj-go" onclick="ForjaMontar.abrir()">Escolher os músculos<i>▶</i></button>
+      <div class="hj-trocar"><button type="button" onclick="ForjaGymUI.startFreeWorkout()">Treino livre</button><button type="button" onclick="ForjaGymUI.openGroupsCard('ready-workouts-card')">Treinos prontos</button><button type="button" onclick="ForjaGymUI.openGroupsCard('workout-groups-card',true)">+ Criar treino</button></div></div>`;
   }else{
     const g=ng.g;const muscles=[...new Set(g.exercises.map(n=>t.getMuscleSync(n)).filter(Boolean))].slice(0,3);
     const sessions=await t.loadSessionsCache();const gs=sessions.filter(s=>s.groupId===g.id&&s.durationMin);
@@ -1212,7 +1212,8 @@ async function renderHoje(){
   const today=t.todayKey();
   const days=['S','T','Q','Q','S','S','D'].map((l,i)=>{const d=t.addDays(mon,i);const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;return `<i class="${trained.has(k)?'f':''}${k===today?' h':''}" title="${k}">${l}</i>`;}).join('');
   const sub=status.compensating?`${status.baseGoal} da meta + ${status.shortfall} da semana passada`:'treinos na semana';
-  html+=`<div class="semana"><div class="dias">${days}</div><div><b>${status.done} de ${status.target}</b><small>${sub}</small></div></div>
+  try{html+=await (root.ForjaMontar?root.ForjaMontar.heroHtml():'');}catch{}
+  html+=`<div class="semana" role="button" tabindex="0" onclick="ForjaMontar.semana(0)" title="Ver a semana"><div class="dias">${days}</div><div><b>${status.done} de ${status.target}</b><small>${sub}</small></div></div>
     <div class="bento b3"><button type="button" onclick="ForjaGymUI.openGroupsCard('workout-groups-card')"><span class="ic">☰</span><b>Meus treinos</b><small>${ng?ng.groups.map(x=>t.escapeHtml(x.name.replace(/^Treino\s+/i,''))).slice(0,4).join(' · '):'criar'}</small></button>
     <button type="button" onclick="switchTab('biblioteca')"><span class="ic">⌕</span><b>Exercícios</b><small>900+</small></button>
     <button type="button" onclick="ForjaGymUI.openGroupsCard('gym-sessions-chart-card')"><span class="ic">↗</span><b>Evolução</b><small>carga e tempo</small></button></div>`;
@@ -1253,7 +1254,7 @@ async function renderTodayList(){
     let txt;
     if(isCardio){const tm=cmin.reduce((s,v)=>s+(v||0),0),tk=ckm.reduce((s,v)=>s+(v||0),0),tc=ckcal.reduce((s,v)=>s+(v||0),0);const p=[];if(tm)p.push(`${tm} min`);if(tk)p.push(`${String(tk).replace('.',',')} km`);if(tc)p.push(`${tc} kcal`);txt=p.join(' · ');}
     else txt=fmtSetsShort(entrySets(e),t.getWeightModeSync(e.name.trim()));
-    return `<div class="today-row"><b>${t.escapeHtml(dn(e.name.trim()))}</b><span>${t.escapeHtml(txt)}</span></div>`;
+    return `<div class="today-row" data-ex-name="${t.escapeHtml(e.name.trim())}" data-ex-src="mine"><b>${t.escapeHtml(dn(e.name.trim()))}</b><span>${t.escapeHtml(txt)}</span></div>`;
   }).join('');
 }
 
@@ -1730,7 +1731,7 @@ return{
   startWorkoutSession,endWorkoutSession,openPickerForAdd,closePicker,selectPickerFilter,showNewExerciseForm,selectMuscle,createNewExercise,
   searchCatalog,addCatalogExercise,addFreeExercise,addCardioEquipment,runRemapHistory,renderReadyWorkouts,useReadyWorkout,suggestMuscleFromName,setMuscleForNew,
   renderWorkoutGroups,showNewGroupForm,closeGroupForm,toggleGroupExercise,editWorkoutGroup,saveWorkoutGroup,deleteWorkoutGroup,loadWorkoutGroupToSession,
-  setPickerEquip,askDeleteSet,deleteSetForCard,askRemoveExercise,addExerciseToSession,removeExerciseCard,toggleBodyCard,applyBodyCardState,toggleRestPop,openExSheet,closeExSheet,setSessionsMetric,showSummary,toggleMoreOpen,openExercisePhotoPopup,pickExercisePhoto,adjustCardWeight,cycleWeightMode,adjustPendingReps,logSetForCard,logCardioSetForCard,toggleWarmupMode,setCardRir,undoLastSetForCard,finishExercise,reopenExercise,
+  renderSessionStack,refreshTreinoTabVisibility,setPickerEquip,askDeleteSet,deleteSetForCard,askRemoveExercise,addExerciseToSession,removeExerciseCard,toggleBodyCard,applyBodyCardState,toggleRestPop,openExSheet,closeExSheet,setSessionsMetric,showSummary,toggleMoreOpen,openExercisePhotoPopup,pickExercisePhoto,adjustCardWeight,cycleWeightMode,adjustPendingReps,logSetForCard,logCardioSetForCard,toggleWarmupMode,setCardRir,undoLastSetForCard,finishExercise,reopenExercise,
   toggleProgressionAnalysis,toggleCardTipEdit,saveCardTip,toggleLibraryOpen,
   adjustRestDuration,toggleCustomRest,adjustCustomRestMin,adjustCustomRestSec,applyCustomRest,startRestTimer,adiarRest,pularRest,openRestModal,closeRestModal,
   selectRpe,saveSessionRpe,skipSessionRpe,

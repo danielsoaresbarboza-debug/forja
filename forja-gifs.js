@@ -139,7 +139,7 @@ async function init(){
   try{const r=await S().get(K);if(r&&r.value){const o=JSON.parse(r.value);if(o.itens)indice=prepara(o.itens);}}catch{}
   render();
   // primeira vez: baixa sozinho em segundo plano (60 pedidos pequenos)
-  if(!indice)setTimeout(()=>carregar({onProg:()=>render()}).then(render).catch(()=>render()),8000);
+  if(!indice)carregar({onProg:()=>render()}).then(render).catch(()=>render()); // a lista vem junto do site: carrega na hora
 }
 root.ForjaGifs={carregar,achar,gif,html,render,atualizar,init,tokens,_set:(lista)=>{indice=prepara(lista);cache.clear();}};
 if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>setTimeout(init,1200));else setTimeout(init,1200);
