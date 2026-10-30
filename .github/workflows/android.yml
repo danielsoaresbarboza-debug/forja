@@ -1,0 +1,53 @@
+name: APK do Forja
+on:
+  push:
+    branches: [android]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+      - run: npx cap sync android
+      - name: Compilar o APK
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+          VERSION_NAME: 1.${{ github.run_number }}
+        run: |
+          set -o pipefail
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee ../build.log
+      - name: Publicar o APK
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk Forja.apk
+          gh release delete forja-android -y --cleanup-tag || true
+          gh release create forja-android Forja.apk --target android \
+            --title "Forja para Android 1.${{ github.run_number }}" \
+            --notes "Baixe o Forja.apk no celular e instale. Versões novas instalam por cima, sem perder os dados."
+      - name: Guardar o registro da compilação
+        if: always()
+        run: |
+          echo "resultado: ${{ job.status }} · execução ${{ github.run_number }} · $(date -u)" > status.txt
+          tail -c 80000 build.log > registro.log 2>/dev/null || echo "sem build.log" > registro.log
+          git config user.name "forja-bot"
+          git config user.email "forja-bot@users.noreply.github.com"
+          git checkout --orphan android-log
+          git rm -rf --cached . > /dev/null
+          git add -f status.txt registro.log
+          git commit -m "registro ${{ github.run_number }}"
+          git push -f origin android-log
