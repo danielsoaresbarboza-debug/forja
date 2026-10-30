@@ -804,3 +804,18 @@ body.f3 #exdb-key-card{display:none!important}
 .sm-ex small{font-family:var(--f3-num);color:var(--f3-tx-3);white-space:nowrap}
 .mt-hero .f3-lbl,.mt-hero .f3-nota{padding:0 4px}
 .mt-hero:empty{display:none}
+
+/* ===== 3.11 Gráficos ===== */
+.gr-per{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
+.gr-per button{min-height:44px;border-radius:12px;border:1px solid var(--f3-borda);background:var(--f3-vidro);color:var(--f3-tx);font-family:var(--f3-ui);font-weight:700;font-size:15px}
+.gr-per button.on{background:#fff;color:#111}
+.gr-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.gr-top b{font-size:16px} .gr-top span{font-family:var(--f3-num);font-weight:800;font-size:16px}
+.gr-sub{display:block;color:var(--f3-tx-3);font-size:13px;margin-top:2px}
+.gr-svg{width:100%;height:auto;margin-top:6px;overflow:visible}
+.gr-grid{stroke:var(--f3-aresta);stroke-width:1}
+.gr-y,.gr-x{fill:var(--f3-tx-3);font-size:10px;font-family:var(--f3-num)}
+.gr-y{text-anchor:end}
+.gr-meta{stroke:var(--f3-tx-2);stroke-width:1.2;stroke-dasharray:4 4}
+.gr-linha{fill:none;stroke-width:1.6;opacity:.55}
+.gr-suave{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}

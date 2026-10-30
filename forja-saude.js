@@ -31,7 +31,7 @@ async function aplicar(dias){
   let novosTreinos=0,novoPeso=0;
   for(const d of dias){
     if(!d||!d.date)continue;
-    resumo[d.date]={steps:d.steps??null,activeKcal:d.activeKcal??null,totalKcal:d.totalKcal??null,sleepMin:d.sleepMin??null,em:new Date().toISOString()};
+    resumo[d.date]={bodyFat:d.bodyFat&&d.bodyFat.pct||null,peso:d.weight&&d.weight.kg||null,steps:d.steps??null,activeKcal:d.activeKcal??null,totalKcal:d.totalKcal??null,sleepMin:d.sleepMin??null,em:new Date().toISOString()};
     for(const ex of (d.exercises||[])){
       const id='sh-'+ex.id;const i=acts.findIndex(a=>a.id===id);
       const item={id,date:d.date,time:hhmm(ex.start),tipo:ex.tipo||'outro',min:Math.round(ex.min||0),kcal:ex.kcal!=null?Math.round(ex.kcal):0,

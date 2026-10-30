@@ -1,8 +1,9 @@
 (function(root,factory){const api=factory(root);if(typeof module==='object'&&module.exports)module.exports=api;root.ForjaChangelog=api;})(typeof globalThis!=='undefined'?globalThis:this,function(root){
 'use strict';
-const CURRENT_VERSION='3.10.0';
+const CURRENT_VERSION='3.11.0';
 
 const HISTORY=[
+  {v:'3.11.0',date:'2026-10-30',items:['Nova aba 📈 Gráficos (30 dias, 3 meses, 1 ano): peso com média de 7 dias, calorias × meta, proteína, água, treino por semana, % de gordura, massa muscular e gordura visceral da balança','Do Samsung Health: passos, calorias ativas e sono']},
   {v:'3.10.0',date:'2026-10-30',items:['Academia: "Montar por músculo" — escolha os músculos de hoje (ex.: peito, costas, tríceps e bíceps) e o app sugere os exercícios: primeiro os que você já faz, com a última carga, depois os clássicos','Seus treinos de sempre: as combinações que você repete viram Treino A, B, C sozinhas, e dá para salvar em Meus treinos','Toque na semana (S T Q Q S S D) para ver o que foi feito em cada dia: músculos e exercícios, e voltar semanas','Segurar o dedo num exercício (Biblioteca, treino em andamento, sugestões) abre o GIF']},
   {v:'3.9.0',date:'2026-10-29',items:['GIFs: a lista do ExerciseDB (1.500 exercícios) agora vem junto do app, sem depender do servidor deles na hora','Cerca de 620 exercícios da biblioteca já têm GIF; a escolha usa o equipamento do exercício para não trocar halteres por máquina']},
   {v:'3.8.2',date:'2026-10-29',items:['GIFs: o download da lista tenta dois caminhos e mostra o motivo se falhar']},

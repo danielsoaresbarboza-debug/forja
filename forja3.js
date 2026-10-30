@@ -19,8 +19,8 @@ function diaRel(key){const h=tk();if(key===h)return 'Hoje';const o=tk(new Date(D
 function toast(msg,action){root.showToast?.(msg,action);}
 
 // ===================== navegação =====================
-const NOMES={meta:'Minha meta',inicio:'Início',corrida:'Corrida',natacao:'Natação',crossfit:'CrossFit',academia:'Academia',biblioteca:'Exercícios',recompensas:'Recompensas',relatorios:'Relatórios',progresso:'Progresso',corpo:'Peso e corpo',agua:'Água',dieta:'Comida',cardapio:'Cardápio',importar:'Importar',mais:'Mais',dados:'Meus dados',atividade:'Atividade'};
-const EXTRA_TABS=['dados','atividade','meta'];
+const NOMES={graficos:'Gráficos',meta:'Minha meta',inicio:'Início',corrida:'Corrida',natacao:'Natação',crossfit:'CrossFit',academia:'Academia',biblioteca:'Exercícios',recompensas:'Recompensas',relatorios:'Relatórios',progresso:'Progresso',corpo:'Peso e corpo',agua:'Água',dieta:'Comida',cardapio:'Cardápio',importar:'Importar',mais:'Mais',dados:'Meus dados',atividade:'Atividade'};
+const EXTRA_TABS=['dados','atividade','meta','graficos'];
 const ESS_TABS=['inicio','dieta','agua','atividade','corpo','meta','dados','mais'];
 function onSwitch(tab){
   if(isEss()&&!ESS_TABS.includes(tab))tab='inicio';
@@ -33,6 +33,7 @@ function onSwitch(tab){
   if(tab==='dados')renderDados();
   if(tab==='atividade')renderAtividade();
   if(tab==='meta')root.ForjaMeta?.render?.();
+  if(tab==='graficos'){const g=$('tab-graficos');if(g&&!$('graf3'))g.innerHTML='<div id="graf3"></div>';root.ForjaGraficos?.render?.();}
   try{root.scrollTo({top:0});}catch{}
 }
 function toggleTabs(){const on=doc.body.classList.toggle('tabs-open');const b=$('sb-trocar');if(b)b.setAttribute('aria-expanded',String(on));}
@@ -482,6 +483,7 @@ function montar(){
     const ren={dieta:'🍽 Comida',corpo:'⚖️ Peso',agua:'💧 Água'};Object.entries(ren).forEach(([k,v])=>{const b=tabs.querySelector(`[data-tab="${k}"]`);if(b)b.textContent=v;});
     const order=['inicio','dieta','agua','atividade','corpo','meta','dados','mais'];order.forEach(k=>{const b=tabs.querySelector(`[data-tab="${k}"]`);if(b)tabs.appendChild(b);});
   }
+  if(!isEss()&&tabs&&!tabs.querySelector('[data-tab="graficos"]')){const b=doc.createElement('button');b.className='tab';b.dataset.tab='graficos';b.textContent='📈 Gráficos';b.onclick=()=>root.switchTab('graficos');const ref=tabs.querySelector('[data-tab="corpo"]');if(ref)ref.before(b);else tabs.appendChild(b);}
   if(!isEss()&&tabs&&!tabs.querySelector('[data-tab="meta"]')){const b=doc.createElement('button');b.className='tab';b.dataset.tab='meta';b.textContent='🎯 Meta de peso';b.onclick=()=>root.switchTab('meta');const ref=tabs.querySelector('[data-tab="corpo"]');if(ref)ref.after(b);else tabs.appendChild(b);}
   doc.body.classList.add('f3');
 }
