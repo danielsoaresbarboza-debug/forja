@@ -837,9 +837,9 @@
 
     <div class="import-section-header corpo">⚖️ Balança — bioimpedância (OKOK)</div>
     <div class="card" id="scale-import-card" data-module-card="scale-import-card">
-      <p class="calc-formula-note">Manda o print da tela "Detalhes" do app OKOK — lê peso, % gordura, massa muscular, água, gordura visceral, metabolismo e mais.</p>
+      <p class="calc-formula-note">Manda os prints do app OKOK (pode escolher vários de uma vez) — com a IA ligada lê peso, % gordura, massa muscular, água, gordura visceral, metabolismo e mais.</p>
       <label for="scale-import-file" class="photo-btn" style="display:block; margin-bottom:10px;">📷 Escolher print da balança</label>
-      <input type="file" id="scale-import-file" accept="image/*" style="display:none" onchange="ForjaGymUI.handleScaleOcrFile(event)">
+      <input type="file" id="scale-import-file" accept="image/*" multiple style="display:none" onchange="ForjaGymUI.handleScaleOcrFile(event)">
       <div id="scale-import-status"></div>
       <div id="scale-import-review"></div>
       <div id="scale-import-history" style="margin-top:14px;"></div>
@@ -1268,6 +1268,7 @@
 <script src="forja-gifs.js"></script>
 <script src="forja-montar.js"></script>
 <script src="forja-graficos.js"></script>
+<script src="forja-balanca.js"></script>
 <script src="free-exercise-pt.js"></script>
 <script src="gym-pt-synonyms.js"></script>
 <script src="exercise-names-pt.js"></script>
@@ -1289,8 +1290,8 @@
 <script src="ui-collapsible.js"></script>
 <script src="install-app.js"></script>
 <script src="home-hero.js"></script>
-<script src="google-config.js?v=3.11.0"></script>
-<script src="google-direct.js?v=3.11.0"></script>
+<script src="google-config.js?v=3.12.0"></script>
+<script src="google-direct.js?v=3.12.0"></script>
 <script src="sheet-sync-script.js"></script>
 <script src="sheet-sync.js"></script>
 <script src="backup-status.js"></script>

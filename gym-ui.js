@@ -1519,33 +1519,75 @@ async function renderWatchOcrHistory(){
 // ================= SCALE (OKOK) OCR — restored into the Importar tab =================
 let scaleOcrResult=null;
 const SCALE_FIELD_DEFS=[{key:'weightKg',label:'Peso',unit:'kg'},{key:'bmi',label:'IMC',unit:''},{key:'bodyFatPct',label:'Gordura',unit:'%'},{key:'fatMassKg',label:'Peso da gordura',unit:'kg'},{key:'skeletalMusclePct',label:'Massa musc. esquelética',unit:'%'},{key:'skeletalMuscleKg',label:'Massa musc. esquelética',unit:'kg'},{key:'muscleMassKg',label:'Peso da massa muscular',unit:'kg'},{key:'waterPct',label:'Água',unit:'%'},{key:'waterKg',label:'Peso da água',unit:'kg'},{key:'visceralFat',label:'Gordura visceral',unit:''},{key:'boneKg',label:'Ossos',unit:'kg'},{key:'bmr',label:'Metabolismo (TMB da balança)',unit:'kcal'},{key:'proteinPct',label:'Proteína',unit:'%'},{key:'obesityPct',label:'Obesidade',unit:'%'},{key:'metabolicAge',label:'Idade metabólica',unit:'anos'},{key:'lbmKg',label:'LBM',unit:'kg'}];
-async function handleScaleOcrFile(e){
-  const t=T();const file=e.target.files[0];if(!file)return;
-  const statusEl=$('scale-import-status');$('scale-import-review').innerHTML='';statusEl.innerHTML='🔍 Lendo a imagem...';
+// Lê o(s) print(s) do OKOK: com a chave do Gemini lê vários prints de uma vez (mais preciso);
+// sem chave, usa o leitor de texto antigo (Tesseract) só no primeiro print.
+const SCALE_HOSTS={imp:['scale-import-status','scale-import-review'],bal:['bal-status','bal-review']};
+let scaleHost='imp';
+function imgParaJpeg(file,max=1600){return new Promise((res,rej)=>{const fr=new FileReader();fr.onerror=rej;fr.onload=()=>{const im=new Image();im.onerror=rej;im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',0.85).split(',')[1]);};im.src=fr.result;};fr.readAsDataURL(file);});}
+async function lerPrintsGemini(files){
+  const G=root.ForjaGeminiVision;if(!G||!(await G.getApiKey()))return null;
+  const parts=[{text:`Estas imagens são prints do app OKOK (balança de bioimpedância), podem ser várias telas da MESMA medição. Leia os números e responda só JSON com estas chaves (número ou null, ponto como decimal, sem unidades):
+{"date":"AAAA-MM-DD ou null","weightKg":,"bmi":,"bodyFatPct":,"fatMassKg":,"skeletalMusclePct":,"skeletalMuscleKg":,"muscleMassKg":,"waterPct":,"waterKg":,"visceralFat":,"boneKg":,"bmr":,"proteinPct":,"obesityPct":,"metabolicAge":,"lbmKg":}
+Correspondências: Peso/Weight=weightKg; IMC/BMI=bmi; Gordura corporal/Body fat %=bodyFatPct; Peso da gordura/Fat mass=fatMassKg; Massa muscular esquelética % e kg=skeletalMusclePct/skeletalMuscleKg; Massa muscular/Muscle mass=muscleMassKg; Água/Body water % e kg=waterPct/waterKg; Gordura visceral=visceralFat; Massa óssea/Bone=boneKg; Metabolismo basal/BMR (kcal)=bmr; Proteína=proteinPct; Obesidade=obesityPct; Idade metabólica/corporal=metabolicAge; LBM/Massa livre de gordura=lbmKg. Se o peso estiver em lb, converta para kg. Não invente: o que não aparecer fica null.`}];
+  for(const f of files.slice(0,6))parts.push({inline_data:{mime_type:'image/jpeg',data:await imgParaJpeg(f)}});
+  const r=await G.generate(parts,{json:true});
+  const out={date:/^\d{4}-\d{2}-\d{2}$/.test(r?.date||'')?r.date:T().todayKey()};
+  SCALE_FIELD_DEFS.forEach(f=>{const v=parseFloat(String(r?.[f.key]??'').replace(',','.'));out[f.key]=isNaN(v)?null:v;});
+  return out.weightKg||out.bodyFatPct?out:null;
+}
+async function handleScaleOcrFile(e,host){
+  const t=T();const files=[...(e.target.files||[])];if(!files.length)return;
+  scaleHost=SCALE_HOSTS[host]?host:'imp';
+  Object.entries(SCALE_HOSTS).forEach(([k,[,rv]])=>{const el=$(rv);if(el)el.innerHTML='';});
+  const statusEl=$(SCALE_HOSTS[scaleHost][0]);statusEl.innerHTML=`🔍 Lendo ${files.length>1?files.length+' prints':'o print'}...`;
   try{
-    if(typeof Tesseract==='undefined')throw new Error('Tesseract não carregou');
-    const rawDataUrl=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);});
-    const dataUrl=await preprocessImageForOcr(rawDataUrl);
-    const result=await Tesseract.recognize(dataUrl,'por');
-    const parsed=t.parseOkokScale(result.data.text||'');
-    if(!parsed){statusEl.innerHTML='Não consegui reconhecer essa tela.';return;}
+    let parsed=null,erroIA=null;
+    try{parsed=await lerPrintsGemini(files);}catch(err){erroIA=err.message;}
+    if(!parsed){
+      if(typeof Tesseract==='undefined')throw new Error(erroIA||'Tesseract não carregou');
+      const rawDataUrl=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(files[0]);});
+      const dataUrl=await preprocessImageForOcr(rawDataUrl);
+      const result=await Tesseract.recognize(dataUrl,'por');
+      parsed=t.parseOkokScale(result.data.text||'');
+    }
+    if(!parsed){statusEl.innerHTML='Não consegui reconhecer essa tela.'+(erroIA?' ('+escHtml(erroIA)+')':'');return;}
     scaleOcrResult=parsed;statusEl.innerHTML='Confira os valores antes de salvar:';renderScaleOcrReview(parsed);
-  }catch{statusEl.innerHTML='Não consegui processar essa imagem.';}
+  }catch(err){statusEl.innerHTML='Não consegui processar essa imagem.'+(err&&err.message?' '+escHtml(err.message):'');}
   e.target.value='';
 }
+function escHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function renderScaleOcrReview(data){
-  const el=$('scale-import-review');
+  const el=$(SCALE_HOSTS[scaleHost][1]);
   el.innerHTML=`<label>Data da medição</label><input type="date" id="scale-ocr-date" value="${data.date}" style="width:100%; background:var(--panel-2); border:1px solid var(--line); color:var(--text); border-radius:10px; padding:10px 12px; margin-bottom:12px;">
-    <div class="goal-grid" style="grid-template-columns:repeat(2,1fr);">${SCALE_FIELD_DEFS.map(f=>`<div class="goal-cell"><div class="glbl">${f.label}</div><div class="gval" contenteditable="true" id="scale-ocr-${f.key}">${data[f.key]??'–'}</div></div>`).join('')}</div>
+    <div class="goal-grid" style="grid-template-columns:repeat(2,1fr);">${SCALE_FIELD_DEFS.map(f=>`<div class="goal-cell"><div class="glbl">${f.label}${f.unit?' ('+f.unit+')':''}</div><div class="gval" contenteditable="true" id="scale-ocr-${f.key}">${data[f.key]??'–'}</div></div>`).join('')}</div>
     <button class="primary" onclick="ForjaGymUI.saveScaleOcrEntry()" style="margin-top:12px;">✓ Salvar leitura</button>`;
+}
+// Salva a leitura da balança. Se no mesmo dia já houver uma pesagem pelo Bluetooth, junta nela.
+async function saveScaleEntry(dados,{fonte='print'}={}){
+  const t=T();const date=dados.date||t.todayKey();
+  const scale=await t.loadScaleCache();
+  let entry=scale.find(e=>e.date===date&&e.fonte==='balanca-bt'&&fonte!=='balanca-bt');
+  if(entry){Object.keys(dados).forEach(k=>{if(dados[k]!=null&&k!=='date')entry[k]=dados[k];});entry.fonte='balanca-bt+print';}
+  else{entry={id:t.cid(),date,time:dados.time||t.nowTime(),fonte,...dados,date};scale.push(entry);}
+  await t.persistScaleCache();
+  if(entry.weightKg&&root.loadBody){
+    const body=await root.loadBody();
+    if(!body.some(e=>e.type==='weight'&&e.date===date&&String(e.fonte||'').startsWith('balanca'))){
+      const h=parseInt(String(entry.time||'08').slice(0,2),10)||8;
+      body.push({id:t.cid(),date,time:entry.time||t.nowTime(),type:'weight',period:h<12?'manha':h<18?'tarde':'noite',value:String(Math.round(entry.weightKg*10)/10).replace('.',','),fonte:fonte==='balanca-bt'?'balanca-bt':'balanca'});
+      await root.saveBody(body);
+    }
+  }
+  return entry;
 }
 async function saveScaleOcrEntry(){
   tapFeedback();const t=T();const date=$('scale-ocr-date').value||t.todayKey();
-  const entry={id:t.cid(),date,time:t.nowTime()};
-  SCALE_FIELD_DEFS.forEach(f=>{const el=$(`scale-ocr-${f.key}`);const v=el?parseFloat(el.textContent.replace(',','.')):NaN;entry[f.key]=isNaN(v)?null:v;});
-  const scale=await t.loadScaleCache();scale.push(entry);await t.persistScaleCache();
-  scaleOcrResult=null;$('scale-import-review').innerHTML='';$('scale-import-status').innerHTML='✅ Leitura salva!';
+  const dados={date};
+  SCALE_FIELD_DEFS.forEach(f=>{const el=$(`scale-ocr-${f.key}`);const v=el?parseFloat(el.textContent.replace(',','.')):NaN;dados[f.key]=isNaN(v)?null:v;});
+  await saveScaleEntry(dados,{fonte:'print'});
+  scaleOcrResult=null;const [st,rv]=SCALE_HOSTS[scaleHost];$(rv).innerHTML='';$(st).innerHTML='✅ Leitura salva!';
   showToast('Dados da balança salvos.');await renderScaleOcrHistory();
+  try{await root.renderBody?.();await root.Forja3?.renderBody?.();}catch{}
 }
 async function deleteScaleEntry(id){const t=T();const scale=await t.loadScaleCache();const next=scale.filter(e=>e.id!==id);await t.storage().set(t.K_SCALE,JSON.stringify(next));t.invalidateAll();await renderScaleOcrHistory();}
 async function renderScaleOcrHistory(){
@@ -1737,7 +1779,7 @@ return{
   selectRpe,saveSessionRpe,skipSessionRpe,
   adjustPlateTarget,selectBarWeight,adjustWeeklyGoal,calShiftMonth,
   handleWatchOcrFile,saveWatchOcrEntry,saveWatchBalanceEntries,toggleWatchEdit,saveWatchEdit,deleteWatchEntry,
-  handleScaleOcrFile,saveScaleOcrEntry,deleteScaleEntry,
+  handleScaleOcrFile,saveScaleOcrEntry,saveScaleEntry,deleteScaleEntry,renderScaleOcrHistory,
   addRewardFromUI,removeReward,redeemReward,
   CATALOG_MUSCLE_MAP,FREE_EX_MUSCLE_MAP,normCatalogText,
   render,init,

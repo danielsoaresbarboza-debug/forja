@@ -819,3 +819,13 @@ body.f3 #exdb-key-card{display:none!important}
 .gr-meta{stroke:var(--f3-tx-2);stroke-width:1.2;stroke-dasharray:4 4}
 .gr-linha{fill:none;stroke-width:1.6;opacity:.55}
 .gr-suave{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---- balança OKOK (3.12) ---- */
+body.f3 .bal3{margin-top:12px;width:100%}
+.bal-vivo{text-align:center;padding:18px 0 6px}
+.bal-vivo b{font-size:52px;font-weight:800;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.bal-vivo small{font-size:18px;margin-left:4px;color:var(--muted,#9aa)}
+.bal-vivo p{margin:6px 0 0;color:var(--muted,#9aa);font-size:14px}
+.bal-sep{margin:20px 0 4px;font-weight:700;font-size:14px;border-top:1px solid var(--line,#333);padding-top:16px}
+.bal-print{display:flex;align-items:center;justify-content:center;cursor:pointer}
+#bal-review .goal-grid{margin-top:6px}

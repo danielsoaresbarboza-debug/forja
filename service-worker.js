@@ -64,6 +64,7 @@ const SHELL_FILES = [
   'forja-gifs.js',
   'forja-montar.js',
   'forja-graficos.js',
+  'forja-balanca.js',
   'edb-index.json',
   'free-exercise-pt.js',
   'gym-pt-synonyms.js',
