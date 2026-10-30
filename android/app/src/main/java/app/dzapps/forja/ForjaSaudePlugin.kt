@@ -1,6 +1,15 @@
 package app.dzapps.forja
 
 import android.Manifest
+import android.annotation.SuppressLint
+import android.bluetooth.BluetoothManager
+import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanSettings
+import android.content.Context
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -33,7 +42,11 @@ import kotlinx.coroutines.launch
 
 @CapacitorPlugin(
     name = "ForjaSaude",
-    permissions = [Permission(alias = "microfone", strings = [Manifest.permission.RECORD_AUDIO])]
+    permissions = [
+        Permission(alias = "microfone", strings = [Manifest.permission.RECORD_AUDIO]),
+        Permission(alias = "bluetooth", strings = [Manifest.permission.BLUETOOTH_SCAN]),
+        Permission(alias = "localizacao", strings = [Manifest.permission.ACCESS_FINE_LOCATION])
+    ]
 )
 class ForjaSaudePlugin : Plugin() {
     private val escopo = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -215,6 +228,69 @@ class ForjaSaudePlugin : Plugin() {
         activity.runOnUiThread { try { reconhecedor?.stopListening() } catch (e: Exception) { } }
         call.resolve()
     }
+
+    // ---------------- Balança OKOK pelo Bluetooth (só lê o anúncio, não conecta) ----------------
+    private var balancaCb: ScanCallback? = null
+    private val principal = Handler(Looper.getMainLooper())
+
+    private fun aliasBt() = if (Build.VERSION.SDK_INT >= 31) "bluetooth" else "localizacao"
+
+    @PluginMethod
+    fun balanca(call: PluginCall) {
+        if (getPermissionState(aliasBt()) != PermissionState.GRANTED) {
+            requestPermissionForAlias(aliasBt(), call, "aoBluetooth"); return
+        }
+        comecarBalanca(call)
+    }
+
+    @PermissionCallback
+    private fun aoBluetooth(call: PluginCall) {
+        if (getPermissionState(aliasBt()) == PermissionState.GRANTED) comecarBalanca(call)
+        else call.reject("Permita \"Dispositivos próximos\" para o Forja ler a balança.", "sem-permissao")
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun comecarBalanca(call: PluginCall) {
+        val segundos = (call.getInt("segundos", 40) ?: 40).coerceIn(5, 120)
+        val ad = (context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager)?.adapter
+        if (ad == null) { call.reject("Este celular não tem Bluetooth.", "sem-bt"); return }
+        if (!ad.isEnabled) { call.reject("Ligue o Bluetooth e tente de novo.", "bt-desligado"); return }
+        val sc = ad.bluetoothLeScanner ?: run { call.reject("Bluetooth indisponível agora.", "sem-bt"); return }
+        pararBalancaInterno()
+        var fim = false
+        val cb = object : ScanCallback() {
+            override fun onScanResult(callbackType: Int, r: ScanResult) {
+                if (fim) return
+                val m = r.scanRecord?.manufacturerSpecificData ?: return
+                val l = Okok.ler(m, r.scanRecord?.deviceName) ?: return
+                if (l.kg < 2 || l.kg > 300) return
+                val o = JSObject().put("kg", Math.round(l.kg * 10) / 10.0).put("impedancia", l.impedancia)
+                    .put("final", l.final).put("modelo", l.modelo).put("aparelho", r.device?.address ?: "")
+                notifyListeners("balanca", o)
+                if (l.final) { fim = true; pararBalancaInterno(); call.resolve(o) }
+            }
+            override fun onScanFailed(errorCode: Int) {
+                if (!fim) { fim = true; call.reject("O Bluetooth falhou (código $errorCode). Tente de novo.", "falha-$errorCode") }
+            }
+        }
+        balancaCb = cb
+        try {
+            sc.startScan(null, ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build(), cb)
+        } catch (e: SecurityException) { fim = true; call.reject("Permita \"Dispositivos próximos\" para o Forja.", "sem-permissao"); return }
+        principal.postDelayed({
+            if (!fim) { fim = true; pararBalancaInterno(); call.reject("Não achei a balança. Suba nela descalço e espere o número parar de piscar.", "timeout") }
+        }, segundos * 1000L)
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun pararBalancaInterno() {
+        val cb = balancaCb ?: return
+        balancaCb = null
+        try { (context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager)?.adapter?.bluetoothLeScanner?.stopScan(cb) } catch (e: Exception) { }
+    }
+
+    @PluginMethod
+    fun pararBalanca(call: PluginCall) { pararBalancaInterno(); call.resolve() }
 
     // ---------------- Google (planilha) pelo login do Android ----------------
     @PluginMethod
