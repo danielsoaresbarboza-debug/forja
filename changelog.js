@@ -1,8 +1,9 @@
 (function(root,factory){const api=factory(root);if(typeof module==='object'&&module.exports)module.exports=api;root.ForjaChangelog=api;})(typeof globalThis!=='undefined'?globalThis:this,function(root){
 'use strict';
-const CURRENT_VERSION='3.12.0';
+const CURRENT_VERSION='3.13.0';
 
 const HISTORY=[
+  {v:'3.13.0',date:'2026-10-30',items:['Corpo → ⚖️ Medições do corpo: a composição corporal do Galaxy Watch vira a referência. Cada medição do relógio entra sozinha (peso, % de gordura, basal) e o Forja calcula massa gorda e massa magra','Prints da tela de composição do Samsung Health também são lidos pela IA (músculo esquelético, água) e completam a medição do relógio','As medições do relógio aparecem nos Gráficos junto com as da balança']},
   {v:'3.12.0',date:'2026-10-30',items:['Corpo: botão ⚖️ Balança. No app Android, "Pesar pelo Bluetooth" lê o peso direto da balança OKOK, sem abrir o app deles','Prints do OKOK agora são lidos pela IA (Gemini): pode mandar várias telas de uma vez e vem gordura, músculo, água, visceral, metabolismo e mais','O peso da balança entra sozinho no Corpo e nos Gráficos']},
   {v:'3.11.0',date:'2026-10-30',items:['Nova aba 📈 Gráficos (30 dias, 3 meses, 1 ano): peso com média de 7 dias, calorias × meta, proteína, água, treino por semana, % de gordura, massa muscular e gordura visceral da balança','Do Samsung Health: passos, calorias ativas e sono']},
   {v:'3.10.0',date:'2026-10-30',items:['Academia: "Montar por músculo" — escolha os músculos de hoje (ex.: peito, costas, tríceps e bíceps) e o app sugere os exercícios: primeiro os que você já faz, com a última carga, depois os clássicos','Seus treinos de sempre: as combinações que você repete viram Treino A, B, C sozinhas, e dá para salvar em Meus treinos','Toque na semana (S T Q Q S S D) para ver o que foi feito em cada dia: músculos e exercícios, e voltar semanas','Segurar o dedo num exercício (Biblioteca, treino em andamento, sugestões) abre o GIF']},

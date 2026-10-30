@@ -1526,9 +1526,9 @@ let scaleHost='imp';
 function imgParaJpeg(file,max=1600){return new Promise((res,rej)=>{const fr=new FileReader();fr.onerror=rej;fr.onload=()=>{const im=new Image();im.onerror=rej;im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',0.85).split(',')[1]);};im.src=fr.result;};fr.readAsDataURL(file);});}
 async function lerPrintsGemini(files){
   const G=root.ForjaGeminiVision;if(!G||!(await G.getApiKey()))return null;
-  const parts=[{text:`Estas imagens são prints do app OKOK (balança de bioimpedância), podem ser várias telas da MESMA medição. Leia os números e responda só JSON com estas chaves (número ou null, ponto como decimal, sem unidades):
+  const parts=[{text:`Estas imagens são prints de uma medição de composição corporal (app OKOK da balança ou Samsung Health / Galaxy Watch), podem ser várias telas da MESMA medição. Leia os números e responda só JSON com estas chaves (número ou null, ponto como decimal, sem unidades):
 {"date":"AAAA-MM-DD ou null","weightKg":,"bmi":,"bodyFatPct":,"fatMassKg":,"skeletalMusclePct":,"skeletalMuscleKg":,"muscleMassKg":,"waterPct":,"waterKg":,"visceralFat":,"boneKg":,"bmr":,"proteinPct":,"obesityPct":,"metabolicAge":,"lbmKg":}
-Correspondências: Peso/Weight=weightKg; IMC/BMI=bmi; Gordura corporal/Body fat %=bodyFatPct; Peso da gordura/Fat mass=fatMassKg; Massa muscular esquelética % e kg=skeletalMusclePct/skeletalMuscleKg; Massa muscular/Muscle mass=muscleMassKg; Água/Body water % e kg=waterPct/waterKg; Gordura visceral=visceralFat; Massa óssea/Bone=boneKg; Metabolismo basal/BMR (kcal)=bmr; Proteína=proteinPct; Obesidade=obesityPct; Idade metabólica/corporal=metabolicAge; LBM/Massa livre de gordura=lbmKg. Se o peso estiver em lb, converta para kg. Não invente: o que não aparecer fica null.`}];
+Correspondências: Peso/Weight=weightKg; IMC/BMI=bmi; Gordura corporal/Body fat %=bodyFatPct; Peso da gordura/Fat mass=fatMassKg; Massa muscular esquelética % e kg=skeletalMusclePct/skeletalMuscleKg; Massa muscular/Muscle mass=muscleMassKg (no Samsung Health \"Músculo esquelético\" em kg vai em skeletalMuscleKg); Massa gorda=fatMassKg; Água/Body water % e kg=waterPct/waterKg; Gordura visceral=visceralFat; Massa óssea/Bone=boneKg; Metabolismo basal/BMR (kcal)=bmr; Proteína=proteinPct; Obesidade=obesityPct; Idade metabólica/corporal=metabolicAge; LBM/Massa livre de gordura=lbmKg. Se o peso estiver em lb, converta para kg. Não invente: o que não aparecer fica null.`}];
   for(const f of files.slice(0,6))parts.push({inline_data:{mime_type:'image/jpeg',data:await imgParaJpeg(f)}});
   const r=await G.generate(parts,{json:true});
   const out={date:/^\d{4}-\d{2}-\d{2}$/.test(r?.date||'')?r.date:T().todayKey()};
@@ -1567,6 +1567,9 @@ async function saveScaleEntry(dados,{fonte='print'}={}){
   const t=T();const date=dados.date||t.todayKey();
   const scale=await t.loadScaleCache();
   let entry=scale.find(e=>e.date===date&&e.fonte==='balanca-bt'&&fonte!=='balanca-bt');
+  // print do Samsung Health da mesma medição do relógio (mesma % de gordura) completa a do relógio
+  if(!entry&&fonte==='print'&&dados.bodyFatPct!=null)entry=scale.find(e=>e.date===date&&e.fonte==='samsung'&&Math.abs((e.bodyFatPct||0)-dados.bodyFatPct)<=0.3);
+  if(entry&&entry.fonte==='samsung'){Object.keys(dados).forEach(k=>{if(dados[k]!=null&&k!=='date')entry[k]=dados[k];});await t.persistScaleCache();return entry;}
   if(entry){Object.keys(dados).forEach(k=>{if(dados[k]!=null&&k!=='date')entry[k]=dados[k];});entry.fonte='balanca-bt+print';}
   else{entry={id:t.cid(),date,time:dados.time||t.nowTime(),fonte,...dados,date};scale.push(entry);}
   await t.persistScaleCache();

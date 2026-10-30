@@ -56,12 +56,40 @@ async function aplicar(dias){
     }
     if(d.bmr&&d.bmr.kcal){dados.tmbRelogio=d.bmr.kcal;dadosMudou=true;}
   }
+  await medicoes(dias,dados);
   // guarda só as últimas 30 datas do resumo
   const chaves=Object.keys(resumo).sort();chaves.slice(0,Math.max(0,chaves.length-30)).forEach(k=>delete resumo[k]);
   await setJ('f3-saude-dias',resumo);await setJ('f3-activities',acts);
   if(bodyMudou)await root.saveBody(body);
   if(dadosMudou)await setJ('f3-dados',dados);
   return {treinos:novosTreinos,peso:novoPeso};
+}
+
+// Medição corporal do relógio (Galaxy Watch, bioimpedância) → mesma lista da balança.
+// O Samsung Health só repassa peso, % de gordura e metabolismo basal ao Health Connect;
+// massa gorda, massa magra e IMC são calculados aqui a partir deles.
+async function medicoes(dias,dados){
+  const t=root.ForjaGymTraining;if(!t?.loadScaleCache)return 0;
+  const scale=await t.loadScaleCache();let n=0;
+  const alt=(Number(dados?.alturaCm)||0)/100;
+  for(const d of dias){
+    if(!d||!d.date||!(d.bodyFat&&d.bodyFat.pct))continue; // sem % de gordura não foi medição do relógio
+    const kg=d.weight&&d.weight.kg||null;const pct=d.bodyFat.pct;
+    const id='sh-bia-'+d.date;
+    const item={id,date:d.date,time:hhmm(d.bodyFat.time)||'08:00',fonte:'samsung',bodyFatPct:pct,
+      weightKg:kg,bmr:d.bmr&&d.bmr.kcal||null,
+      fatMassKg:kg?Math.round(kg*pct/100*10)/10:null,lbmKg:kg?Math.round((kg-kg*pct/100)*10)/10:null,
+      bmi:kg&&alt>1?Math.round(kg/(alt*alt)*10)/10:null};
+    const i=scale.findIndex(e=>e.id===id);
+    if(i<0){scale.push(item);n++;}else scale[i]={...scale[i],...item};
+  }
+  if(n||dias.some(d=>d&&d.bodyFat))await t.persistScaleCache();
+  return n;
+}
+async function ultimaMedicao(){
+  const t=root.ForjaGymTraining;if(!t?.loadScaleCache)return null;
+  const s=(await t.loadScaleCache()).filter(e=>e.fonte==='samsung').sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+  return s[0]||null;
 }
 
 async function importar({silencioso=true,ler=true}={}){
@@ -135,6 +163,6 @@ async function init(){
   try{root.Capacitor.Plugins.App?.addListener?.('resume',()=>importar({silencioso:true}));}catch{}
 }
 
-root.ForjaSaude={init,importar,aplicar,render,linhaHome,autorizar,permissoes,sincronizar,plugin};
+root.ForjaSaude={init,importar,aplicar,medicoes,ultimaMedicao,render,linhaHome,autorizar,permissoes,sincronizar,plugin};
 if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',()=>setTimeout(init,1500));else setTimeout(init,1500);
 })(window);
