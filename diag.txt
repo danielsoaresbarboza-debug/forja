@@ -1,0 +1,28 @@
+== cabeçalhos da API
+HTTP/2 200 
+date: Fri, 30 Oct 2026 02:40:48 GMT
+content-type: application/json
+content-length: 911
+access-control-allow-origin: *
+report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=KFLO3ktnsD0HMaNXO9j0WUMxnvAVObdJIfeRRrdvt2qB0G85tx0tD9G1%2BvsLIe3mY%2B%2BeEKwLVdaXPHtapPmjBiPwa9hpEjU0TURFHFxkOu9Qi6zLSy%2FTxj3ZcFo6JGVcKA%2FEwvQ%3D"}]}
+nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+server: cloudflare
+cf-ray: a5270eacdf914f16-IAD
+alt-svc: h3=":443"; ma=86400
+
+== cabeçalhos do GIF
+HTTP/2 200 
+date: Fri, 30 Oct 2026 02:40:48 GMT
+content-type: image/gif
+content-length: 67084
+etag: "79381789f3b518e7e85c4f86c41d1bed"
+last-modified: Tue, 25 Nov 2025 06:59:50 GMT
+accept-ranges: bytes
+server: cloudflare
+cf-cache-status: DYNAMIC
+report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=GR99q5Rhad%2BRKRMVKAmiWbNTuHPvMG7bKu1DsSQiI85Ff8h%2F62%2BDNCNU285EicKPJOQIiU59C%2FoCmzUzr3rvCLrQI7FdccI%2FXRL6DhYVQ5Iwz2Cl3LZwK2HH92L4Mz0u3iHrV0H6rNk%3D"}]}
+nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+cf-ray: a5270eb09d79170d-IAD
+
+
+== total 1500
