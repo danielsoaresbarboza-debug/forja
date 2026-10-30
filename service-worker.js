@@ -61,6 +61,7 @@ const SHELL_FILES = [
   'wger-library.js',
   'free-exercise-library.js',
   'forja-equip.js',
+  'forja-gifs.js',
   'free-exercise-pt.js',
   'gym-pt-synonyms.js',
   'exercise-names-pt.js',

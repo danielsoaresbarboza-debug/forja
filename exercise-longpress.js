@@ -48,7 +48,7 @@
     overlay.innerHTML=`
       <div class="ex-longpress-card">
         <button type="button" class="ex-longpress-close" onclick="ForjaExerciseLongPress.close()">✕</button>
-        ${photo?(root.ForjaEquip?root.ForjaEquip.mov(photo,''):`<img src="${photo}" alt="" draggable="false">`):(equip?`<div class="ex-longpress-icon">${equip.icon}</div>`:'<div class="ex-longpress-icon">🏋️</div>')}
+        ${(root.ForjaGifs&&!isCardio&&root.ForjaGifs.html(name,''))||(photo?(root.ForjaEquip?root.ForjaEquip.mov(photo,''):`<img src="${photo}" alt="" draggable="false">`):(equip?`<div class="ex-longpress-icon">${equip.icon}</div>`:'<div class="ex-longpress-icon">🏋️</div>'))}
         <h3>${escapeHtml(info.namePt)}</h3>
         ${info.nameEn?`<div class="ex-longpress-en">🇬🇧 ${escapeHtml(info.nameEn)}</div>`:''}
         ${info.desc?`<p>${escapeHtml(info.desc)}</p>`:''}

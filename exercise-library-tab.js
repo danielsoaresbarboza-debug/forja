@@ -332,7 +332,7 @@
     card.style.display='block';
     card.innerHTML=`
       <div class="card-head"><h2>${t.escapeHtml(namePt)}</h2><button class="switch-btn" onclick="ForjaExerciseLibraryTab.closeDetail()">Fechar</button></div>
-      ${photo?(root.ForjaEquip&&!myPhoto?root.ForjaEquip.mov(photo,'library-media'):`<img class="library-media" src="${photo}" alt="" draggable="false">`):(equipIcon?`<div class="ex-chip-ph" style="height:120px;font-size:48px;">${equipIcon}</div>`:'')}
+      ${(!isCardio&&root.ForjaGifs&&root.ForjaGifs.html(name,'library-media'))||''}${(!isCardio&&root.ForjaGifs&&root.ForjaGifs.gif(name))?'':photo?(root.ForjaEquip&&!myPhoto?root.ForjaEquip.mov(photo,'library-media'):`<img class="library-media" src="${photo}" alt="" draggable="false">`):(equipIcon?`<div class="ex-chip-ph" style="height:120px;font-size:48px;">${equipIcon}</div>`:'')}
       ${nameEn?`<p class="calc-formula-note">🇬🇧 Nome no aparelho/inglês: <b>${t.escapeHtml(nameEn)}</b></p>`:''}
       <p class="calc-formula-note">Grupo muscular: ${t.escapeHtml(muscle)}${root.ForjaEquip&&!isCardio&&!/^Equipamento:/.test(desc||'')&&root.ForjaEquip.grupoPorNome(name)?` · Equipamento: ${t.escapeHtml(root.ForjaEquip.nomeGrupo(root.ForjaEquip.grupoPorNome(name)))}`:''}${isCardio?' (registro por tempo/distância/kcal)':''}${sub?` · Última vez: ${t.escapeHtml(sub)}`:''}${myPhoto?' · 📸 Foto sua':''}</p>
       ${desc?`<p class="calc-formula-note">${t.escapeHtml(desc)}</p>`:''}

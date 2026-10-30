@@ -912,7 +912,7 @@ function buildRowHtml(idx){
 // ---------- janela do exercício ----------
 async function buildSheetHtml(idx){
   const t=T();const ex=sessionExercises[idx];const m=segMode(ex.weightMode);
-  const photo=t.getPhotoSync(ex.name)||(root.ForjaExerciseLibrary&&root.ForjaExerciseLibrary.getWgerImageSync(ex.name));
+  const photo=t.getPhotoSync(ex.name)||(root.ForjaGifs&&root.ForjaGifs.gif(ex.name))||(root.ForjaExerciseLibrary&&root.ForjaExerciseLibrary.getWgerImageSync(ex.name));
   const N=root.ForjaExerciseNames;const equip=N&&N.equipFor?N.equipFor(ex.name):'';
   const muscle=t.getMuscleSync(ex.name);
   const lastTxt=ex.last&&lastWork(ex).length?`${diaCurto(ex.last.date)}: ${fmtSetsShort(ex.last.sets,ex.weightMode)}`:'primeira vez';

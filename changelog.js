@@ -1,8 +1,9 @@
 (function(root,factory){const api=factory(root);if(typeof module==='object'&&module.exports)module.exports=api;root.ForjaChangelog=api;})(typeof globalThis!=='undefined'?globalThis:this,function(root){
 'use strict';
-const CURRENT_VERSION='3.6.0';
+const CURRENT_VERSION='3.7.0';
 
 const HISTORY=[
+  {v:'3.7.0',date:'2026-10-29',items:['GIFs de verdade nos exercícios de musculação: lista grátis do ExerciseDB (1.500 exercícios), baixada uma vez e guardada no aparelho','O GIF aparece no detalhe do exercício, na foto ampliada e na janela do exercício durante o treino','Mais → GIFs dos exercícios: baixar ou atualizar a lista']},
   {v:'3.6.0',date:'2026-10-29',items:['Exercícios: dentro de cada grupo (Peito, Costas…) dá para filtrar por equipamento: Halteres, Barra, Máquina, Polia, Peso do corpo, Kettlebell, Elástico','Sem filtro, a lista vem separada por equipamento, com a quantidade de cada um','O mesmo filtro aparece ao adicionar exercício durante o treino','Fotos dos exercícios agora mostram o movimento (início e fim alternando, como um GIF)']},
   {v:'3.5.1',date:'2026-10-29',items:['Samsung Health: na primeira sincronização traz as últimas 2 semanas de treinos, peso e sono']},
   {v:'3.5.0',date:'2026-10-29',items:['App Android do Forja: lê o Samsung Health (pelo Health Connect) ao abrir e sozinho às 8h, 12h, 15h e 21h','Treinos do relógio viram atividades e somam na meta de comida; peso vai para o Corpo; % de gordura para Meus dados','Início mostra passos, calorias ativas e sono do dia','No app Android, o ditado e o login do Google usam o próprio Android','Mais → Samsung Health: autorizar, sincronizar agora e link para baixar o app']},
