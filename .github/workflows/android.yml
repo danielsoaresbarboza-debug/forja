@@ -10,19 +10,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        id: co
       - uses: actions/setup-java@v4
+        id: java
         with:
           distribution: temurin
           java-version: '21'
       - uses: actions/setup-node@v4
+        id: node
         with:
           node-version: '22'
-      - uses: android-actions/setup-android@v3
       - name: Preparar
+        id: prep
         run: |
+          echo "ANDROID_HOME=$ANDROID_HOME ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" | tee build.log
           set -o pipefail
-          { npm ci && npx cap sync android; } 2>&1 | tee build.log
+          { npm ci && npx cap sync android; } 2>&1 | tee -a build.log
       - name: Compilar o APK
+        id: gradle
         env:
           VERSION_CODE: ${{ github.run_number }}
           VERSION_NAME: 1.${{ github.run_number }}
@@ -45,6 +50,7 @@ jobs:
         if: always()
         run: |
           echo "resultado: ${{ job.status }} · execução ${{ github.run_number }} · $(date -u)" > status.txt
+          echo "checkout=${{ steps.co.outcome }} java=${{ steps.java.outcome }} node=${{ steps.node.outcome }} preparar=${{ steps.prep.outcome }} gradle=${{ steps.gradle.outcome }}" >> status.txt
           tail -c 80000 build.log > registro.log 2>/dev/null || echo "sem build.log" > registro.log
           git config user.name "forja-bot"
           git config user.email "forja-bot@users.noreply.github.com"
