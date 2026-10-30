@@ -1,0 +1,15 @@
+{
+  "appId": "app.dzapps.forja",
+  "appName": "Forja",
+  "webDir": "www",
+  "server": {
+    "url": "https://danielsoaresbarboza-debug.github.io/forja/",
+    "errorPath": "offline.html",
+    "allowNavigation": [
+      "danielsoaresbarboza-debug.github.io"
+    ]
+  },
+  "android": {
+    "backgroundColor": "#0b0b0d"
+  }
+}

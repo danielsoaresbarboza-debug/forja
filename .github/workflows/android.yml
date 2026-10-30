@@ -18,8 +18,10 @@ jobs:
         with:
           node-version: '22'
       - uses: android-actions/setup-android@v3
-      - run: npm ci
-      - run: npx cap sync android
+      - name: Preparar
+        run: |
+          set -o pipefail
+          { npm ci && npx cap sync android; } 2>&1 | tee build.log
       - name: Compilar o APK
         env:
           VERSION_CODE: ${{ github.run_number }}
@@ -28,7 +30,7 @@ jobs:
           set -o pipefail
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee ../build.log
+          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee -a ../build.log
       - name: Publicar o APK
         if: success()
         env:
