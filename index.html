@@ -486,16 +486,8 @@
     </div>
     <div class="card" id="gym-calendar-card" data-module-card="gym-calendar-card">
       <div class="card-head"><h2>📅 Calendário</h2></div>
-      <div class="cal-header"><button onclick="ForjaGymUI.calShiftMonth(-1)">‹</button><span id="cal-label"></span><button onclick="ForjaGymUI.calShiftMonth(1)">›</button></div>
-      <div class="cal-grid" id="cal-grid"></div>
-      <div class="cal-legend">
-        <span><i class="dot" style="background:var(--blue)"></i> Academia</span>
-        <span><i class="dot" style="background:#0a8f6f"></i> Cardio</span>
-        <span><i class="dot" style="background:linear-gradient(135deg, var(--blue) 50%, #0a8f6f 50%)"></i> Os dois</span>
-      </div>
-      <div class="cal-legend" style="margin-top:4px;">
-        <span>📷 Foto</span><span>⌚ Relógio</span><span>💧 Meta de água</span><span>📉 Déficit calórico</span>
-      </div>
+      <div id="cl-relatorios"></div>
+    </div>
     </div>
 
     <div class="card" id="gym-records-card" data-module-card="gym-records-card"><div class="card-head"><h2>Recordes (1RM estimado)</h2></div><div id="pr-list"></div></div>
@@ -1290,8 +1282,8 @@
 <script src="ui-collapsible.js"></script>
 <script src="install-app.js"></script>
 <script src="home-hero.js"></script>
-<script src="google-config.js?v=3.13.0"></script>
-<script src="google-direct.js?v=3.13.0"></script>
+<script src="google-config.js?v=3.14.0"></script>
+<script src="google-direct.js?v=3.14.0"></script>
 <script src="sheet-sync-script.js"></script>
 <script src="sheet-sync.js"></script>
 <script src="backup-status.js"></script>
@@ -1322,6 +1314,7 @@
 <script src="forja-meta.js"></script>
 <script src="forja-ia.js"></script>
 <script src="forja-saude.js"></script>
+<script src="forja-calendario.js"></script>
 <script src="forja-tour.js"></script>
 <script>forjaInitialization.then(()=>ForjaStravaUI.init()).then(()=>ForjaStravaUI.sync()).catch(e=>console.error('Strava:',e));</script>
 <script>forjaInitialization.then(()=>ForjaEstimateUI.init()).catch(e=>console.error('Referências:',e));</script>

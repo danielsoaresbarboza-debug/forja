@@ -833,3 +833,64 @@ body.f3 .bal3{margin-top:12px;width:100%}
 .bal-grid>div{background:var(--f3-vidro-2,#1b1b1f);border:1px solid var(--f3-borda,#333);border-radius:12px;padding:8px 10px}
 .bal-grid small{display:block;font-size:11px;color:var(--muted,#9aa)}
 .bal-grid b{font-size:16px}
+
+/* =====================================================================
+   CALENDÁRIO DE TREINOS 3.14 (estilo "ofensiva") — forja-calendario.js
+   ===================================================================== */
+.cl{display:flex;flex-direction:column;gap:12px;font-family:var(--f3-ui);color:var(--f3-tx)}
+.cl-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cl-num{font-family:var(--f3-disp);font-size:52px;line-height:.95;color:var(--f3-tx)}
+.cl-lbl{font-size:15px;font-weight:700;color:var(--f3-tx-2)}
+.cl-chama{display:flex;flex-direction:column;align-items:center;min-width:92px;padding:9px 10px;border-radius:18px;background:var(--f3-vidro);border:1px solid var(--f3-borda);filter:grayscale(1);opacity:.7}
+.cl-chama.on{filter:none;opacity:1;background:linear-gradient(160deg,rgba(255,150,0,.22),rgba(255,42,70,.14));border-color:rgba(255,150,0,.45)}
+.cl-chama span{font-size:26px;line-height:1}
+.cl-chama b{font-family:var(--f3-num);font-size:24px;line-height:1.1;color:#ff9a1f}
+.cl-chama:not(.on) b{color:var(--f3-tx-3)}
+.cl-chama small{font-size:12px;font-weight:700;color:var(--f3-tx-3);text-align:center;line-height:1.15}
+.cl-tipos{display:flex;flex-wrap:wrap;gap:6px}
+.cl-tipos span{display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;background:var(--f3-vidro);border:1px solid var(--f3-borda);font-size:14px;font-weight:700;color:var(--f3-tx-2)}
+.cl-tipos b{font-family:var(--f3-num);color:var(--f3-tx)}
+.cl-cal{padding:10px 8px 8px;border-radius:var(--f3-raio);background:var(--f3-vidro);border:1px solid var(--f3-borda)}
+.cl-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.cl-nav b{font-size:16px}
+.cl-nav b::first-letter{text-transform:uppercase}
+.cl-nav button{width:44px;height:44px;border-radius:12px;border:1px solid var(--f3-borda);background:var(--f3-vidro-2);color:var(--f3-tx);font-size:22px}
+.cl-nav button:disabled{opacity:.3}
+.cl-sem,.cl-lin{display:grid;grid-template-columns:repeat(7,1fr)}
+.cl-sem span{text-align:center;font-size:12px;font-weight:700;color:var(--f3-tx-3);padding-bottom:4px}
+.cl-lin{margin:3px 0}
+.cl-d{position:relative;height:46px;border:0;padding:0;margin:0;background:transparent;color:var(--f3-tx-2);font-family:var(--f3-ui);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer}
+.cl-d.vazio{cursor:default}
+.cl-d b{font-family:var(--f3-num);font-size:14px;font-weight:700;line-height:1}
+.cl-d i{font-style:normal;font-size:12px;line-height:1}
+.cl-d.f{background:#ff8a0c;color:#fff}
+.cl-d.f.ini{border-top-left-radius:23px;border-bottom-left-radius:23px}
+.cl-d.f.fim{border-top-right-radius:23px;border-bottom-right-radius:23px}
+.cl-d.folga b{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--f3-vidro-2);color:var(--f3-tx-3)}
+.cl-d.futuro{color:var(--f3-tx-3);opacity:.55}
+.cl-d.hoje::after{content:"";position:absolute;inset:3px;border-radius:20px;border:2px solid var(--f3-treino);pointer-events:none}
+.cl-d.f.hoje::after{border-color:#fff}
+.cl-d.sel{box-shadow:inset 0 -3px 0 var(--f3-tx)}
+.cl-d:focus-visible{outline:2px solid var(--f3-agua);outline-offset:-2px}
+.cl-leg{display:flex;gap:14px;justify-content:center;margin-top:8px;font-size:13px;font-weight:600;color:var(--f3-tx-3)}
+.cl-leg span{display:inline-flex;align-items:center;gap:5px}
+.cl-leg i{width:14px;height:14px;border-radius:50%;display:inline-block}
+.cl-leg i.f{background:#ff9600} .cl-leg i.folga{background:var(--f3-vidro-2);border:1px solid var(--f3-borda)} .cl-leg i.hoje{border:2px solid var(--f3-treino)}
+.cl-det{padding:11px 13px;border-radius:var(--f3-raio);background:var(--f3-chapa);border:1px solid var(--f3-aresta)}
+.cl-det-t{font-weight:700;font-size:15px;margin-bottom:4px}
+.cl-it{display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-top:1px solid var(--f3-aresta)}
+.cl-it:first-of-type{border-top:0}
+.cl-it>span{font-size:20px;line-height:1.2}
+.cl-it b{display:block;font-size:15px} .cl-it b small{font-weight:600;color:var(--f3-tx-3);font-size:12px}
+.cl-it>div>small{display:block;color:var(--f3-tx-2);font-size:14px}
+.cl-nada{margin:2px 0 0;color:var(--f3-tx-3);font-size:14px}
+.cl-meta{padding:11px 13px;border-radius:var(--f3-raio);background:var(--f3-vidro);border:1px solid var(--f3-borda)}
+.cl-meta-t{display:flex;justify-content:space-between;font-weight:700;font-size:15px}
+.cl-meta-t b{font-family:var(--f3-num)}
+.cl-barra{height:10px;border-radius:5px;background:var(--f3-vidro-2);overflow:hidden;margin:7px 0 6px}
+.cl-barra i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,#ff9600,var(--f3-treino));transition:width .3s}
+.cl-meta small{color:var(--f3-tx-3);font-size:13px;font-weight:600}
+.cl-mais{margin-top:12px;width:100%;min-height:46px;border-radius:14px;border:1px solid var(--f3-borda);background:var(--f3-vidro);color:var(--f3-tx);font-family:var(--f3-ui);font-weight:700;font-size:15px}
+#gym-calendar-card .cl{padding-top:4px}
+body[data-theme="light"] .cl-d.f{color:#fff}
+@media (max-width:350px){.cl-d{height:42px}.cl-num{font-size:44px}}

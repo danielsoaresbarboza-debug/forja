@@ -14,7 +14,7 @@ const MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agos
 const TIPOS={academia:['🏋️','Academia'],musculacao:['🏋️','Musculação'],natacao:['🏊','Natação'],corrida:['🏃','Corrida'],
   caminhada:['🚶','Caminhada'],spinning:['🚴','Bike'],funcional:['🔥','Funcional'],crossfit:['🔥','CrossFit'],outro:['✳️','Treino']};
 const tipoDe=k=>TIPOS[k]||TIPOS.outro;
-let st={mes:null,sel:null,host:null};
+const ESTADOS={};const est=id=>ESTADOS[id]=ESTADOS[id]||{mes:null,sel:null};
 
 // ---------- juntar tudo por dia ----------
 async function dados(){
@@ -63,7 +63,8 @@ function sequencias(dias){
 
 // ---------- desenho ----------
 async function render(host){
-  host=host||st.host;if(!host)return;st.host=host;
+  if(typeof host==='string')host=$(host);if(!host)return;
+  if(!host.id)host.id='cl-h'+Object.keys(ESTADOS).length;const hid=host.id,st=est(hid);
   const dias=await dados();const hoje=tk();
   if(!st.mes){const h=new Date();st.mes=[h.getFullYear(),h.getMonth()];}
   const [y,m]=st.mes;const ini=new Date(y,m,1),nDias=new Date(y,m+1,0).getDate();
@@ -86,7 +87,7 @@ async function render(host){
       const cls=['cl-d'];if(f){cls.push('f');if(!antes)cls.push('ini');if(!depois)cls.push('fim');}else if(k<hoje)cls.push('folga');else if(k>hoje)cls.push('futuro');
       if(k===hoje)cls.push('hoje');if(k===st.sel)cls.push('sel');
       const ics=f?dias[k].tipos.slice(0,2).map(t=>tipoDe(t)[0]).join(''):'';
-      grade+=`<button type="button" class="${cls.join(' ')}" onclick="ForjaCalendario.dia('${k}')" aria-label="${pd(k).getDate()} de ${MESES[m]}${f?': treinou':''}"><b>${pd(k).getDate()}</b>${ics?`<i>${ics}</i>`:''}</button>`;
+      grade+=`<button type="button" class="${cls.join(' ')}" onclick="ForjaCalendario.dia('${k}','${hid}')" aria-label="${pd(k).getDate()} de ${MESES[m]}${f?': treinou':''}"><b>${pd(k).getDate()}</b>${ics?`<i>${ics}</i>`:''}</button>`;
     }
     grade+='</div>';
   }
@@ -99,7 +100,7 @@ async function render(host){
       <div class="cl-chama${seq.atual?' on':''}"><span>🔥</span><b>${seq.atual}</b><small>dia${seq.atual===1?'':'s'} seguido${seq.atual===1?'':'s'}</small></div></div>
     ${Object.keys(cont).length?`<div class="cl-tipos">${Object.entries(cont).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<span>${tipoDe(t)[0]} ${tipoDe(t)[1]} <b>${n}</b></span>`).join('')}</div>`:''}
     <div class="cl-cal">
-      <div class="cl-nav"><button type="button" aria-label="Mês anterior" onclick="ForjaCalendario.mudar(-1)">‹</button><b>${MESES[m]} de ${y}</b><button type="button" aria-label="Próximo mês" ${ehAtual?'disabled':''} onclick="ForjaCalendario.mudar(1)">›</button></div>
+      <div class="cl-nav"><button type="button" aria-label="Mês anterior" onclick="ForjaCalendario.mudar(-1,'${hid}')">‹</button><b>${MESES[m]} de ${y}</b><button type="button" aria-label="Próximo mês" ${ehAtual?'disabled':''} onclick="ForjaCalendario.mudar(1,'${hid}')">›</button></div>
       <div class="cl-sem"><span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span></div>
       ${grade}
       <div class="cl-leg"><span><i class="f"></i>treinou</span><span><i class="folga"></i>descanso</span><span><i class="hoje"></i>hoje</span></div>
@@ -109,12 +110,12 @@ async function render(host){
       <small>Melhor sequência: ${seq.melhor} dia${seq.melhor===1?'':'s'} seguido${seq.melhor===1?'':'s'}</small></div>
   </div>`;
 }
-function mudar(n){const [y,m]=st.mes;const d=new Date(y,m+n,1);st.mes=[d.getFullYear(),d.getMonth()];st.sel=null;render();}
-function dia(k){st.sel=st.sel===k?null:k;render();}
+function mudar(n,hid){const st=est(hid);const [y,m]=st.mes;const d=new Date(y,m+n,1);st.mes=[d.getFullYear(),d.getMonth()];st.sel=null;render(hid);}
+function dia(k,hid){const st=est(hid);st.sel=st.sel===k?null:k;render(hid);}
 async function abrir(){
-  st.mes=null;st.sel=tk();
-  root.Forja3.abrirFolha('<div class="f3-t">📅 Calendário de treinos</div><div id="cl-folha"></div>');
-  await render($('cl-folha'));
+  const st=est('cl-folha');st.mes=null;st.sel=tk();
+  root.Forja3.abrirFolha('<div class="f3-t">📅 Calendário de treinos</div><div id="cl-folha"></div>'+(root.ForjaMontar?'<button type="button" class="cl-mais" onclick="ForjaMontar.semana(0)">🏋️ Exercícios de cada dia da semana</button>':''));
+  await render('cl-folha');
 }
 // dias treinados (qualquer tipo) — usado na faixa da semana da Academia
 async function diasTreinados(){return new Set(Object.keys(await dados()));}
