@@ -1937,7 +1937,7 @@ async function loadCombinedSportCalorias(dateStr){
       const snap = await db.collection(col).get();
       snap.docs.forEach(d=>{
         const v = d.data();
-        if(v && v.data===dateStr && v.calorias) total += Number(v.calorias)||0;
+        if(v && v.data===dateStr && v.calorias && v.origem!=='samsung') total += Number(v.calorias)||0;
       });
     }catch(e){ /* collection may not exist yet */ }
   }
@@ -3040,7 +3040,7 @@ async function renderCardapioTab(){
 // ---------- CORRIDA TAB ----------
 let corridaUnsub = null;
 let corridaStatusUnsub = null;
-const ORIGEM_BADGE = {print:'📷', push_garmin:'⚡', strava:'🔄', manual:'✍️', 'push_garmin+print':'⚡📷', 'push_garmin+manual':'⚡✍️'};
+const ORIGEM_BADGE = {samsung:'⌚', print:'📷', push_garmin:'⚡', strava:'🔄', manual:'✍️', 'push_garmin+print':'⚡📷', 'push_garmin+manual':'⚡✍️'};
 
 // ---------- EDITAR/EXCLUIR (Corrida/Natação/CrossFit) ----------
 // 3 abas. Em vez de gesto de "segurar" (mais frágil entre mouse/toque, e nada no resto
@@ -3297,7 +3297,7 @@ function renderCorridaHistory(corridas){
   listEl.innerHTML = corridas.map(c=>`
     <div class="card" style="padding:10px 14px;cursor:pointer;" onclick="toggleCorridaDetail('${c.id}')">
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span>${fmtDate(c.data)} · ${c.distancia_km.toFixed(2)} km · ${fmtDuracaoCorrida(c.duracao_s)} · ${fmtPace(c.ritmo)}</span>
+        <span>${fmtDate(c.data)} · ${c.distancia_km>0?c.distancia_km.toFixed(2)+' km':'distância —'} · ${fmtDuracaoCorrida(c.duracao_s)} · ${fmtPace(c.ritmo)}</span>
         <span>${ORIGEM_BADGE[c.origem]||''}</span>
       </div>
       <div id="corrida-detail-${c.id}" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.08);font-size:13px;color:#8a8fb0;">
@@ -3314,7 +3314,7 @@ function corridaDetailHtml(c){
   if(c.fc_media) rows.push(`❤️ FC média ${Math.round(c.fc_media)}${c.fc_max?` · máx ${Math.round(c.fc_max)}`:''}`);
   if(c.elevacao_m) rows.push(`⛰️ ${Math.round(c.elevacao_m)}m de subida`);
   if(c.cadencia) rows.push(`👟 cadência ${Math.round(c.cadencia)}`);
-  const origemLabel = {print:'print do relógio', push_garmin:'push (relógio)', strava:'Strava', manual:'digitado manualmente'}[c.origem] || c.origem;
+  const origemLabel = {samsung:'Galaxy Watch (automático)', print:'print do relógio', push_garmin:'push (relógio)', strava:'Strava', manual:'digitado manualmente'}[c.origem] || c.origem;
   rows.push(`fonte: ${origemLabel}`);
   return rows.join(' · ') + activityActionsHtml('corridas', c.id);
 }
@@ -3502,7 +3502,7 @@ function natacaoDetailHtml(c){
   const rows = [`🔥 ${Math.round(c.calorias||0)} kcal`];
   if(c.fc_media) rows.push(`❤️ FC média ${Math.round(c.fc_media)}${c.fc_max?` · máx ${Math.round(c.fc_max)}`:''}`);
   if(c.training_effect_label) rows.push(`🎯 ${NATACAO_EFFECT_PT[c.training_effect_label]||c.training_effect_label.toLowerCase()}`);
-  const origemLabel = {print:'print do relógio', push_garmin:'push (relógio)', strava:'Strava', manual:'digitado manualmente'}[c.origem] || c.origem;
+  const origemLabel = {samsung:'Galaxy Watch (automático)', print:'print do relógio', push_garmin:'push (relógio)', strava:'Strava', manual:'digitado manualmente'}[c.origem] || c.origem;
   rows.push(`fonte: ${origemLabel}`);
   return rows.join(' · ') + activityActionsHtml('natacao', c.id);
 }
@@ -3546,7 +3546,7 @@ function renderNatacaoHistory(sessoes){
   listEl.innerHTML = sessoes.map(c=>`
     <div class="card" style="padding:10px 14px;cursor:pointer;" onclick="toggleNatacaoDetail('${c.id}')">
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span>${fmtDate(c.data)} · ${Math.round(c.distancia_m)}m · ${fmtDuracaoCorrida(c.duracao_s)} · ${fmtRitmo100m(c.ritmo_100m)}</span>
+        <span>${fmtDate(c.data)} · ${c.distancia_m>0?Math.round(c.distancia_m)+'m':'distância —'} · ${fmtDuracaoCorrida(c.duracao_s)} · ${fmtRitmo100m(c.ritmo_100m)}</span>
         <span>${ORIGEM_BADGE[c.origem]||''}</span>
       </div>
       <div id="natacao-detail-${c.id}" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.08);font-size:13px;color:#8a8fb0;">

@@ -57,6 +57,7 @@ async function aplicar(dias){
     if(d.bmr&&d.bmr.kcal){dados.tmbRelogio=d.bmr.kcal;dadosMudou=true;}
   }
   await medicoes(dias,dados);
+  try{await esportes(dias);}catch(e){console.warn('esportes',e);}
   // guarda só as últimas 30 datas do resumo
   const chaves=Object.keys(resumo).sort();chaves.slice(0,Math.max(0,chaves.length-30)).forEach(k=>delete resumo[k]);
   await setJ('f3-saude-dias',resumo);await setJ('f3-activities',acts);
@@ -84,6 +85,33 @@ async function medicoes(dias,dados){
     if(i<0){scale.push(item);n++;}else scale[i]={...scale[i],...item};
   }
   if(n||dias.some(d=>d&&d.bodyFat))await t.persistScaleCache();
+  return n;
+}
+// Natação e corrida do relógio → abas Natação e Corrida (as calorias já contam pela Atividade,
+// então esses registros têm origem 'samsung' e ficam fora da soma de calorias das abas).
+async function esportes(dias){
+  const db=root.claude?await root.claude.use('db'):null;if(!db)return 0;
+  const cfg={natacao:{col:'natacao',campo:'distancia_m'},corrida:{col:'corridas',campo:'distancia_km'}};
+  let n=0;const cache={};
+  for(const d of dias){
+    for(const ex of (d&&d.exercises)||[]){
+      const c=cfg[ex.tipo];if(!c)continue;
+      if(!cache[c.col]){const snap=await db.collection(c.col).get();cache[c.col]=snap.docs.map(x=>({id:x.id,...x.data()}));}
+      const docs=cache[c.col];
+      const dur=Math.max(60,Math.round((new Date(ex.end)-new Date(ex.start))/1000)||Math.round((ex.min||0)*60));
+      const m=Number(ex.distM)||0;
+      const doc={data:d.date,duracao_s:dur,calorias:ex.kcal!=null?Math.round(ex.kcal):null,origem:'samsung',shId:ex.id,hora:hhmm(ex.start)};
+      if(ex.fcMedia)doc.fc_media=Math.round(ex.fcMedia);if(ex.fcMax)doc.fc_max=Math.round(ex.fcMax);
+      if(c.col==='natacao'){doc.distancia_m=m;doc.ritmo_100m=m>0?dur/m*100:null;if(ex.voltas)doc.voltas=ex.voltas;}
+      else{doc.distancia_km=Math.round(m/10)/100;doc.ritmo=m>0?dur/(m/1000):null;}
+      const ja=docs.find(x=>x.shId===ex.id);
+      if(ja){const patch={};for(const k in doc)if(doc[k]!=null&&ja[k]!==doc[k])patch[k]=doc[k];if(Object.keys(patch).length){await db.collection(c.col).doc(ja.id).update(patch);Object.assign(ja,patch);}continue;}
+      // mesmo treino já lançado por print/manual no mesmo dia → só completa o que falta
+      const par=docs.find(x=>x.data===d.date&&!x.shId&&(!(x[c.campo]>0)||!(doc[c.campo]>0)||Math.abs(x[c.campo]-doc[c.campo])<=Math.max(x[c.campo],doc[c.campo])*0.1));
+      if(par){const patch={shId:ex.id};for(const k in doc)if(doc[k]!=null&&(par[k]==null||par[k]===0)&&k!=='origem')patch[k]=doc[k];await db.collection(c.col).doc(par.id).update(patch);Object.assign(par,patch);continue;}
+      const ref=await db.collection(c.col).add(doc);docs.push({id:ref.id,...doc});n++;
+    }
+  }
   return n;
 }
 async function ultimaMedicao(){
@@ -163,6 +191,6 @@ async function init(){
   try{root.Capacitor.Plugins.App?.addListener?.('resume',()=>importar({silencioso:true}));}catch{}
 }
 
-root.ForjaSaude={init,importar,aplicar,medicoes,ultimaMedicao,render,linhaHome,autorizar,permissoes,sincronizar,plugin};
+root.ForjaSaude={init,importar,aplicar,medicoes,esportes,ultimaMedicao,render,linhaHome,autorizar,permissoes,sincronizar,plugin};
 if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',()=>setTimeout(init,1500));else setTimeout(init,1500);
 })(window);
