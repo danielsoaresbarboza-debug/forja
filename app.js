@@ -4284,6 +4284,7 @@ function switchTab(tab){
   if(tab==='natacao') renderNatacaoTab();
   if(tab==='crossfit') renderCrossfitTab();
   if(tab==='academia'||tab==='recompensas'||tab==='relatorios') window.ForjaGymTraining?.render?.().then(()=>window.ForjaGymUI?.render?.());
+  if(tab==='relatorios') window.ForjaCalendario?.render?.('cl-relatorios')?.catch?.(e=>console.error('Calendário:',e));
   if(tab==='academia') window.ForjaGymSuggest?.render?.();
   if(tab==='biblioteca') window.ForjaGymTraining?.render?.().then(()=>window.ForjaExerciseLibraryTab?.render?.());
   if(tab==='agua'){renderWaterBottleViews();renderWaterHistory();}

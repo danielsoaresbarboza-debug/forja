@@ -1,8 +1,9 @@
 (function(root,factory){const api=factory(root);if(typeof module==='object'&&module.exports)module.exports=api;root.ForjaChangelog=api;})(typeof globalThis!=='undefined'?globalThis:this,function(root){
 'use strict';
-const CURRENT_VERSION='3.14.0';
+const CURRENT_VERSION='3.14.1';
 
 const HISTORY=[
+  {v:'3.14.1',date:'2026-10-30',items:['Corrigido: Recordes, Volume total levantado e Duração dos treinos apareciam repetidos no fim de todas as abas. Agora ficam só em Relatórios','O calendário de Relatórios aparece assim que a aba abre','Início: saiu o cartão "Meta semanal", que repetia o anel de treino (ele continua na Academia)']},
   {v:'3.14.0',date:'2026-10-30',items:['Natação e corrida do Galaxy Watch agora aparecem sozinhas nas abas Natação e Corrida (selo ⌚), com distância, voltas e batimentos quando o relógio manda. Se você já tinha lançado o mesmo treino por print, ele só é completado, sem duplicar','Novo 📅 Calendário de treinos, estilo ofensiva: dias treinados unidos numa faixa laranja, descanso em cinza, 🔥 dias seguidos, quantos treinos de cada tipo no mês e a meta da semana','Toque num dia do calendário para ver o que foi feito. Ele abre tocando na semana da Academia e também fica em Relatórios','A faixa da semana da Academia passa a marcar qualquer treino (natação, corrida, bike…), não só musculação']},
   {v:'3.13.0',date:'2026-10-30',items:['Corpo → ⚖️ Medições do corpo: a composição corporal do Galaxy Watch vira a referência. Cada medição do relógio entra sozinha (peso, % de gordura, basal) e o Forja calcula massa gorda e massa magra','Prints da tela de composição do Samsung Health também são lidos pela IA (músculo esquelético, água) e completam a medição do relógio','As medições do relógio aparecem nos Gráficos junto com as da balança']},
   {v:'3.12.0',date:'2026-10-30',items:['Corpo: botão ⚖️ Balança. No app Android, "Pesar pelo Bluetooth" lê o peso direto da balança OKOK, sem abrir o app deles','Prints do OKOK agora são lidos pela IA (Gemini): pode mandar várias telas de uma vez e vem gordura, músculo, água, visceral, metabolismo e mais','O peso da balança entra sozinho no Corpo e nos Gráficos']},

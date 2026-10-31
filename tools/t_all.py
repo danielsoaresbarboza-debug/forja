@@ -14,6 +14,8 @@ async def run(p,page,w,ua=None,tabs=TABS):
   for t in tabs:
     await pg.evaluate(f"switchTab('{t}')"); await pg.wait_for_timeout(500)
     sw=await pg.evaluate("document.documentElement.scrollWidth"); vw=await pg.evaluate("innerWidth")
+    fora=await pg.evaluate("[...document.querySelectorAll('.card')].filter(c=>{const r=c.getBoundingClientRect();return r.height>0&&!c.closest('[id^=tab-]')&&!c.closest('.f3-caixa,dialog,.modal')}).map(c=>c.id||c.className).slice(0,5)")
+    if fora: errs.append(f'{t}: blocos fora da aba {fora}'); continue
     if sw>vw+1: errs.append(f'{t}: rolagem lateral {sw}>{vw}')
     else: ok+=1
   await b.close(); return ok,len(tabs),errs

@@ -3,7 +3,6 @@
  const KEY='hidden-modules-v1';
  // {id, label, group}
  const MODULES=[
-  {id:'weekly-goal-card',label:'🎯 Meta semanal (Início)',group:'Início'},
   {id:'weekly-report-card',label:'📊 Comparação semanal (Início)',group:'Início'},
   {id:'plate-calc-card',label:'🧮 Calculadora de anilhas',group:'Academia'},
   {id:'gym-weekly-goal-card',label:'🎯 Meta semanal (Academia)',group:'Academia'},

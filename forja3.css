@@ -304,7 +304,7 @@ body.folha3-open{overflow:hidden}
 /* =====================================================================
    INÍCIO 3.0
    ===================================================================== */
-body.f3 #home-hero,body.f3 #quote-card,body.f3 #creatine-week-card,body.f3 #home-small-indicators,body.f3 [data-home-card="atalhos"],body.f3 [data-home-card="atualizar"]{display:none!important}
+body.f3 #home-hero,body.f3 #weekly-goal-card,body.f3 #quote-card,body.f3 #creatine-week-card,body.f3 #home-small-indicators,body.f3 [data-home-card="atalhos"],body.f3 [data-home-card="atualizar"]{display:none!important}
 .hoje3{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
 .hoje3-p{position:relative;overflow:hidden;border-radius:24px;padding:16px 14px 13px;border:1px solid rgba(255,255,255,.14);background:radial-gradient(220px 160px at 100% 0%,rgba(255,42,70,.35),transparent 70%),linear-gradient(160deg,#24070d,#121215 62%);box-shadow:0 14px 30px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.12);color:#fff;font-family:var(--f3-ui)}
 .hoje3-p::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.07) 50%,transparent 65%);background-size:250% 100%;animation:f3passa 7s ease-in-out infinite;pointer-events:none}
